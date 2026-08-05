@@ -1,4 +1,6 @@
+from .classifier import classify_schema_change
 from .config import Settings
+from .mcp_client import DataHubMcpClient
 from .models import (
     ChangeProofReport,
     ChangeRequest,
@@ -20,6 +22,7 @@ __all__ = [
     "ChangeRequest",
     "ChangeType",
     "Confidence",
+    "DataHubMcpClient",
     "DecisionStatus",
     "GeneratedPatch",
     "ImpactAssessment",
@@ -30,4 +33,5 @@ __all__ = [
     "Settings",
     "ValidationResult",
     "WritebackResult",
+    "classify_schema_change",
 ]

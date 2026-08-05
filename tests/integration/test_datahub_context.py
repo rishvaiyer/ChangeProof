@@ -5,7 +5,9 @@ import os
 import pytest
 
 from changeproof.config import Settings
+from changeproof.mcp_client import DataHubMcpClient
 
+SOURCE_URN = "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.staging.stg_streams,PROD)"
 
 pytestmark = pytest.mark.skipif(
     os.getenv("CHANGE_PROOF_LIVE_DATAHUB") != "1",
@@ -15,16 +17,10 @@ pytestmark = pytest.mark.skipif(
 
 def test_live_datahub_lineage_contains_artist_payouts() -> None:
     settings = Settings.from_env()
-
-    from scripts.seed_datahub import fetch_downstream_lineage
-
-    downstream = fetch_downstream_lineage(
-        gms_url=settings.datahub_gms_url,
-        token=settings.datahub_gms_token,
-        dataset_urn=(
-            "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.staging.stg_streams,PROD)"
-        ),
+    evidence = DataHubMcpClient(settings).get_downstream_context(
+        source_urn=SOURCE_URN,
         source_field="artist_id",
     )
 
-    assert "artist_payouts" in downstream
+    assert evidence.column_lineage_available is True
+    assert "artist_payouts" in {node.name for node in evidence.downstream}
