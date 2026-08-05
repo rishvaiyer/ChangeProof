@@ -1,6 +1,22 @@
 # ChangeProof
 
-Scaffold for the ChangeProof DataHub hackathon project.
+Predict downstream impact from DataHub metadata and propose a safer schema-change rollout.
+
+## Dashboard
+
+Start the deterministic SonicLedger demo locally:
+
+```bash
+uv sync --extra dev
+uv run uvicorn changeproof.app:app --reload
+```
+
+- `GET /` renders the impact dashboard.
+- `POST /analyze` evaluates a proposed schema type change.
+- `GET /healthz` reports application health.
+
+The hosted demo uses bundled SonicLedger metadata so it remains reliable without credentials.
+The live DataHub MCP adapter is exercised separately through the opt-in local integration test.
 
 ## SonicLedger demo baseline
 
