@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChangeProof predicts downstream data impact and proposes a safer rollout.">
+    <title>ChangeProof · Safe schema changes</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+  </head>
+  <body>
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <main>
+      <nav>
+        <a class="brand" href="/" aria-label="ChangeProof home">
+          <span class="brand-mark">CP</span>
+          <span>ChangeProof</span>
+        </a>
+        <span class="evidence-badge"><i></i> Bundled SonicLedger demo metadata</span>
+      </nav>
+
+      <header class="hero">
+        <p class="eyebrow">DATA CONTRACT INTELLIGENCE</p>
+        <h1>Know what breaks.<br><span>Ship the safe change.</span></h1>
+        <p class="lede">ChangeProof traces a proposed schema edit through DataHub lineage, identifies every exposed consumer, and builds a staged remediation plan before production feels it.</p>
+      </header>
+
+      <section class="analyzer" aria-labelledby="analyzer-title">
+        <div class="section-heading">
+          <div>
+            <p class="step-label">01 · PROPOSE</p>
+            <h2 id="analyzer-title">Test a schema change</h2>
+          </div>
+          <span class="scenario">Royalty pipeline · PROD</span>
+        </div>
+        <form action="/analyze" method="post">
+          <label>
+            <span>Column</span>
+            <input name="column" value="{{ values.get('column', 'artist_id') }}" autocomplete="off" required>
+          </label>
+          <label>
+            <span>Current type</span>
+            <input name="old_type" value="{{ values.get('old_type', 'varchar') }}" autocomplete="off" required>
+          </label>
+          <span class="arrow" aria-hidden="true">→</span>
+          <label>
+            <span>Proposed type</span>
+            <input name="new_type" value="{{ values.get('new_type', 'bigint') }}" autocomplete="off" required>
+          </label>
+          <button type="submit">Analyze impact <span>↗</span></button>
+        </form>
+        {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+      </section>
+
+      {% if analysis %}
+      <section class="results" aria-live="polite">
+        <div class="summary-grid">
+          <article class="metric confidence">
+            <p>CONFIDENCE</p>
+            <strong>{{ analysis.impact.confidence.value }}</strong>
+            <span>Fresh column lineage</span>
+          </article>
+          <article class="metric">
+            <p>BLAST RADIUS</p>
+            <strong>{{ analysis.impact.impacted_assets | length }}</strong>
+            <span>Downstream assets</span>
+          </article>
+          <article class="metric">
+            <p>MAX DEPTH</p>
+            <strong>{{ analysis.impact.impacted_assets[-1].hop }}</strong>
+            <span>Lineage hops</span>
+          </article>
+          <article class="metric critical">
+            <p>CRITICAL ASSETS</p>
+            <strong>{{ analysis.impact.critical_assets | length }}</strong>
+            <span>Require coordinated review</span>
+          </article>
+        </div>
+
+        <div class="section-heading impact-heading">
+          <div>
+            <p class="step-label">02 · TRACE</p>
+            <h2>Observed downstream impact</h2>
+          </div>
+          <span class="source-pill">stg_streams.artist_id</span>
+        </div>
+
+        <div class="lineage">
+          <article class="asset source-asset">
+            <div class="asset-top"><span class="node-dot"></span><small>SOURCE</small></div>
+            <h3>stg_streams</h3>
+            <p>analytics@sonicledger.demo</p>
+          </article>
+          {% for asset in analysis.impact.impacted_assets %}
+          <span class="connector" aria-hidden="true">→</span>
+          <article class="asset{% if asset.critical %} asset-critical{% endif %}">
+            <div class="asset-top"><span class="node-dot"></span><small>HOP {{ asset.hop }}</small></div>
+            <h3>{{ asset.name }}</h3>
+            <p>{{ asset.owners[0] }}</p>
+            {% if asset.critical %}<span class="critical-tag">CRITICAL</span>{% endif %}
+          </article>
+          {% endfor %}
+        </div>
+
+        <section class="solution">
+          <div class="section-heading">
+            <div>
+              <p class="step-label">03 · REMEDIATE</p>
+              <h2>Proposed safe rollout</h2>
+            </div>
+            <code>{{ analysis.plan.strategy }}</code>
+          </div>
+          <p class="solution-summary">{{ analysis.plan.summary }}</p>
+          <div class="plan-grid">
+            <div>
+              <h3><span class="number">A</span> Rollout sequence</h3>
+              <ol>
+                {% for step in analysis.plan.rollout_steps %}<li>{{ step }}</li>{% endfor %}
+              </ol>
+            </div>
+            <div class="rollback">
+              <h3><span class="number">B</span> Rollback guardrail</h3>
+              <ol>
+                {% for step in analysis.plan.rollback_steps %}<li>{{ step }}</li>{% endfor %}
+              </ol>
+            </div>
+          </div>
+        </section>
+      </section>
+      {% endif %}
+
+      <footer>
+        <span>ChangeProof</span>
+        <p>Deterministic hosted demo · Live DataHub MCP adapter verified locally</p>
+      </footer>
+    </main>
+  </body>
+</html>
