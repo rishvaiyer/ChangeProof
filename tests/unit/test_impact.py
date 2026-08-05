@@ -42,6 +42,27 @@ def test_table_lineage_without_owner_coverage_is_medium_confidence(
     assert "column lineage" in " ".join(result.reasons).lower()
 
 
+def test_owner_coverage_gap_with_fresh_column_lineage_is_medium_confidence(
+    fresh_complete_evidence: Callable[[], MetadataEvidence],
+) -> None:
+    evidence = fresh_complete_evidence().model_copy(
+        update={
+            "downstream": [
+                node.model_copy(update={"owners": []})
+                for node in fresh_complete_evidence().downstream
+            ],
+            "missing": ["owner_coverage"],
+        }
+    )
+
+    result = assess_impact(evidence)
+
+    assert result.confidence is Confidence.MEDIUM
+    assert result.required_reviewers == ["analytics@sonicledger.demo"]
+    assert "owner coverage" in " ".join(result.reasons).lower()
+    assert "column lineage" not in " ".join(result.reasons).lower()
+
+
 def test_stale_or_missing_column_lineage_lowers_confidence(
     stale_evidence: Callable[[], MetadataEvidence],
 ) -> None:

@@ -24,7 +24,11 @@ def plan_remediation(request: ChangeRequest, impact: ImpactAssessment) -> Remedi
 def _rename_plan(request: ChangeRequest, impact: ImpactAssessment) -> RemediationPlan:
     automatic = impact.confidence is Confidence.HIGH
     downstream_assets = _sorted_assets(impact.impacted_assets)
-    actions = _rename_actions(request, downstream_assets)
+    actions = _rename_actions(
+        request,
+        downstream_assets,
+        reviewer_owner=_review_owner(impact),
+    )
 
     summary = (
         f"Add `{request.new_column}` while keeping `{request.old_column}` "
@@ -94,7 +98,11 @@ def _removal_plan(request: ChangeRequest, impact: ImpactAssessment) -> Remediati
             "preserve a compatibility view or "
             "alias during migration, and collect owner approval before deleting the field."
         ),
-        actions=_removal_actions(request, downstream_assets),
+        actions=_removal_actions(
+            request,
+            downstream_assets,
+            reviewer_owner=_review_owner(impact),
+        ),
         rollout_steps=[
             (
                 f"Announce the proposed removal of `{request.old_column}` and "
@@ -133,7 +141,11 @@ def _type_change_plan(request: ChangeRequest, impact: ImpactAssessment) -> Remed
             f"validate the safe cast from `{request.old_type}` to "
             f"`{request.new_type}`, and migrate downstream consumers in stages."
         ),
-        actions=_type_change_actions(request, downstream_assets),
+        actions=_type_change_actions(
+            request,
+            downstream_assets,
+            reviewer_owner=_review_owner(impact),
+        ),
         rollout_steps=[
             (
                 f"Add a parallel typed field for `{request.old_column}` "
@@ -175,11 +187,16 @@ def _unsupported_plan(request: ChangeRequest, impact: ImpactAssessment) -> Remed
     return RemediationPlan(
         strategy="manual_review_required",
         summary=(
-            "Observed metadata is not sufficient to generate a deterministic "
-            "automatic remediation plan; "
-            "manual review is required before any source or downstream edits."
+            "This schema change shape is unsupported by the deterministic "
+            "automatic planner, so manual review is required before any "
+            "source or downstream edits."
         ),
-        actions=_unsupported_actions(request, downstream_assets, impact),
+        actions=_unsupported_actions(
+            request,
+            downstream_assets,
+            impact,
+            reviewer_owner=_review_owner(impact),
+        ),
         rollout_steps=[
             "Review the schema diff manually and confirm which source contract changed.",
             (
@@ -196,7 +213,10 @@ def _unsupported_plan(request: ChangeRequest, impact: ImpactAssessment) -> Remed
             "Revert any partial downstream edits that relied on unverified assumptions.",
             "Re-run compile and regression checks once the previous contract is restored.",
         ],
-        unresolved_risks=_common_risks(request, impact),
+        unresolved_risks=[
+            *_common_risks(request, impact),
+            *_impact_review_risks(impact),
+        ],
         requires_approval=True,
         supported_automatically=False,
     )
@@ -205,12 +225,15 @@ def _unsupported_plan(request: ChangeRequest, impact: ImpactAssessment) -> Remed
 def _rename_actions(
     request: ChangeRequest,
     assets: list[LineageNode],
+    *,
+    reviewer_owner: str | None,
 ) -> list[RemediationAction]:
     if not assets:
         return [
             _source_action(
                 request,
                 "Review the rename before downstream updates can be proposed.",
+                owner=reviewer_owner,
             )
         ]
     return [
@@ -244,6 +267,8 @@ def _rename_actions(
 def _removal_actions(
     request: ChangeRequest,
     assets: list[LineageNode],
+    *,
+    reviewer_owner: str | None,
 ) -> list[RemediationAction]:
     if not assets:
         return [
@@ -251,6 +276,7 @@ def _removal_actions(
                 request,
                 f"Document the removal of `{request.old_column}` and gather "
                 "manual lineage evidence first.",
+                owner=reviewer_owner,
             )
         ]
     return [
@@ -283,6 +309,8 @@ def _removal_actions(
 def _type_change_actions(
     request: ChangeRequest,
     assets: list[LineageNode],
+    *,
+    reviewer_owner: str | None,
 ) -> list[RemediationAction]:
     if not assets:
         return [
@@ -290,6 +318,7 @@ def _type_change_actions(
                 request,
                 f"Validate a safe cast for `{request.old_column}` before "
                 "downstream migrations are proposed.",
+                owner=reviewer_owner,
             )
         ]
     return [
@@ -324,12 +353,15 @@ def _unsupported_actions(
     request: ChangeRequest,
     assets: list[LineageNode],
     impact: ImpactAssessment,
+    *,
+    reviewer_owner: str | None,
 ) -> list[RemediationAction]:
     if not assets:
         return [
             _source_action(
                 request,
                 f"Collect additional metadata evidence before editing `{request.source_file}`.",
+                owner=reviewer_owner,
                 validation_checks=[
                     (
                         "Confirm the exact schema diff from typed fixtures "
@@ -364,6 +396,7 @@ def _unsupported_actions(
             _source_action(
                 request,
                 "Review unresolved impact evidence before drafting source edits.",
+                owner=reviewer_owner,
                 validation_checks=[
                     "Expand lineage or ownership metadata for the unsupported change.",
                     "Re-run impact assessment after the evidence gaps are closed.",
@@ -379,6 +412,7 @@ def _source_action(
     request: ChangeRequest,
     action: str,
     *,
+    owner: str | None = None,
     validation_checks: list[str] | None = None,
 ) -> RemediationAction:
     return RemediationAction(
@@ -389,6 +423,7 @@ def _source_action(
             "No downstream asset-level automation can be justified from "
             "the observed evidence."
         ),
+        owner=owner,
         validation_checks=validation_checks
         or [
             "Confirm the source model diff against typed fixtures before rollout.",
@@ -421,6 +456,12 @@ def _common_risks(request: ChangeRequest, impact: ImpactAssessment) -> list[str]
     return risks
 
 
+def _impact_review_risks(impact: ImpactAssessment) -> list[str]:
+    if impact.confidence is Confidence.HIGH:
+        return []
+    return [f"Impact assessment requires review: {reason}" for reason in impact.reasons]
+
+
 def _asset_reason(asset: LineageNode, source_column: str) -> str:
     critical_note = " It is marked critical." if asset.critical else ""
     return (
@@ -431,6 +472,10 @@ def _asset_reason(asset: LineageNode, source_column: str) -> str:
 
 def _owner_for_asset(asset: LineageNode) -> str | None:
     return sorted(asset.owners)[0] if asset.owners else None
+
+
+def _review_owner(impact: ImpactAssessment) -> str | None:
+    return sorted(impact.required_reviewers)[0] if impact.required_reviewers else None
 
 
 def _ordered_rollout_step(

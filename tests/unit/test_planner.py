@@ -99,3 +99,32 @@ def test_unsupported_plan_calls_for_manual_review(
     assert plan.requires_approval is True
     assert "manual review" in plan.summary.lower()
     assert plan.rollback_steps
+    assert "not sufficient" not in plan.summary.lower()
+
+
+def test_unsupported_plan_with_complete_evidence_does_not_claim_missing_metadata(
+    complete_impact: Callable[[], ImpactAssessment],
+) -> None:
+    plan = plan_remediation(_unsupported_request(), complete_impact())
+
+    assert not any("missing metadata" in risk.lower() for risk in plan.unresolved_risks)
+    assert not any("metadata is incomplete" in risk.lower() for risk in plan.unresolved_risks)
+
+
+def test_source_only_fallback_action_propagates_reviewer_owner(
+    removal_request: Callable[..., ChangeRequest],
+    complete_impact: Callable[[], ImpactAssessment],
+) -> None:
+    impact = complete_impact().model_copy(
+        update={
+            "impacted_assets": [],
+            "critical_assets": [],
+            "required_reviewers": ["analytics@sonicledger.demo"],
+        }
+    )
+
+    plan = plan_remediation(removal_request(), impact)
+
+    assert len(plan.actions) == 1
+    assert plan.actions[0].asset_name == "stg_streams"
+    assert plan.actions[0].owner == "analytics@sonicledger.demo"
