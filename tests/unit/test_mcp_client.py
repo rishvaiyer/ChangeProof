@@ -17,6 +17,7 @@ PAYOUTS_URN = (
 ROYALTIES_URN = (
     "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.marts.fct_royalties,PROD)"
 )
+FAR_URN = "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.marts.far_asset,PROD)"
 
 
 class FakeTool:
@@ -247,6 +248,61 @@ def test_get_downstream_context_keeps_table_lineage_when_column_lineage_is_missi
     assert evidence.missing == ["column_lineage"]
     assert [node.name for node in evidence.downstream] == ["fct_royalties"]
     assert evidence.downstream[0].fields == []
+
+
+def test_get_downstream_context_bounds_official_three_plus_degree_as_hop_three() -> None:
+    session = FakeSession(
+        tool_names=["list_schema_fields", "get_lineage", "get_entities"],
+        tool_results={
+            "list_schema_fields": FakeCallToolResult(
+                structured_content={
+                    "urn": SOURCE_URN,
+                    "fields": [{"fieldPath": "artist_id", "nativeDataType": "varchar"}],
+                }
+            ),
+            "get_lineage": FakeCallToolResult(
+                structured_content={
+                    "downstreams": {
+                        "searchResults": [
+                            {
+                                "entity": {
+                                    "urn": PAYOUTS_URN,
+                                    "type": "DATASET",
+                                    "name": "artist_payouts",
+                                },
+                                "degree": "3+",
+                                "lineageColumns": ["artist_id"],
+                            },
+                            {
+                                "entity": {
+                                    "urn": FAR_URN,
+                                    "type": "DATASET",
+                                    "name": "far_asset",
+                                },
+                                "degree": 4,
+                                "lineageColumns": ["artist_id"],
+                            },
+                        ]
+                    }
+                }
+            ),
+            "get_entities": FakeCallToolResult(
+                structured_content=[
+                    {"urn": SOURCE_URN},
+                    {"urn": PAYOUTS_URN},
+                    {"urn": FAR_URN},
+                ]
+            ),
+        },
+    )
+
+    evidence = build_client(session).get_downstream_context(
+        source_urn=SOURCE_URN,
+        source_field="artist_id",
+    )
+
+    assert [(node.name, node.hop) for node in evidence.downstream] == [("artist_payouts", 3)]
+    assert all(1 <= node.hop <= 3 for node in evidence.downstream)
 
 
 def test_get_downstream_context_rejects_missing_required_tools() -> None:

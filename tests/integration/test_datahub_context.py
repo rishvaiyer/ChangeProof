@@ -24,3 +24,4 @@ def test_live_datahub_lineage_contains_artist_payouts() -> None:
 
     assert evidence.column_lineage_available is True
     assert "artist_payouts" in {node.name for node in evidence.downstream}
+    assert all(1 <= node.hop <= 3 for node in evidence.downstream)

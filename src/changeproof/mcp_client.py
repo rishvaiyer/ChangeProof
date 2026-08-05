@@ -14,6 +14,7 @@ from .config import Settings
 from .models import LineageNode, MetadataEvidence
 
 REQUIRED_DATAHUB_TOOLS = frozenset({"get_entities", "get_lineage", "list_schema_fields"})
+DATAHUB_LINEAGE_MAX_HOPS = 3
 
 SessionFactory = Callable[[], AsyncIterator[Any]]
 
@@ -69,13 +70,18 @@ class DataHubMcpClient:
             search_results = self._as_list(
                 (lineage_payload.get("downstreams") or {}).get("searchResults")
             )
+            bounded_results = [
+                (result, hop)
+                for result in search_results
+                if isinstance(result, Mapping)
+                for hop in [self._hop(result.get("degree"))]
+                if hop <= DATAHUB_LINEAGE_MAX_HOPS
+            ]
 
             downstream_urns = [
                 urn
                 for urn in (
-                    self._entity_urn(result.get("entity"))
-                    for result in search_results
-                    if isinstance(result, Mapping)
+                    self._entity_urn(result.get("entity")) for result, _hop in bounded_results
                 )
                 if urn is not None
             ]
@@ -95,10 +101,7 @@ class DataHubMcpClient:
 
             downstream_nodes: list[LineageNode] = []
             column_lineage_available = False
-            for result in search_results:
-                if not isinstance(result, Mapping):
-                    continue
-
+            for result, hop in bounded_results:
                 entity = result.get("entity")
                 if not isinstance(entity, Mapping):
                     continue
@@ -117,7 +120,7 @@ class DataHubMcpClient:
                         urn=entity_urn,
                         name=self._entity_name(entity, fallback_urn=entity_urn),
                         entity_type=self._entity_type(entity),
-                        hop=self._hop(result.get("degree")),
+                        hop=hop,
                         fields=lineage_columns,
                         owners=self._owner_emails(details),
                         critical=self._is_critical(details),
@@ -127,7 +130,7 @@ class DataHubMcpClient:
             missing: list[str] = []
             if source_field not in field_names:
                 missing.append("source_field_missing")
-            if search_results and not column_lineage_available:
+            if bounded_results and not column_lineage_available:
                 missing.append("column_lineage")
 
             return MetadataEvidence(
@@ -299,8 +302,12 @@ class DataHubMcpClient:
     def _hop(self, degree: Any) -> int:
         if isinstance(degree, int) and degree >= 1:
             return degree
-        if isinstance(degree, str) and degree.isdigit():
-            return max(1, int(degree))
+        if isinstance(degree, str):
+            bounded_degree = degree.strip()
+            if bounded_degree == f"{DATAHUB_LINEAGE_MAX_HOPS}+":
+                return DATAHUB_LINEAGE_MAX_HOPS
+            if bounded_degree.isdigit():
+                return max(1, int(bounded_degree))
         return 1
 
     def _value(self, item: Any, key: str) -> Any:
