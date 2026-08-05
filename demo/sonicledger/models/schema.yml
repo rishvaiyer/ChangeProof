@@ -1,0 +1,103 @@
+version: 2
+
+seeds:
+  - name: raw_dsp_streams
+    description: Deterministic SonicLedger DSP seed fixture for local dbt and DataHub demos.
+    columns:
+      - name: stream_id
+        description: Unique stream event identifier.
+        tests:
+          - not_null
+          - unique
+      - name: artist_id
+        description: Stable artist identifier used across the SonicLedger lineage chain.
+        tests:
+          - not_null
+      - name: stream_count
+        description: Total paid streams in the source event.
+        tests:
+          - not_null
+          - is_positive
+      - name: rate_per_stream
+        description: Royalty rate applied per stream.
+        tests:
+          - not_null
+          - is_positive
+
+models:
+  - name: stg_streams
+    description: Clean staging model for raw SonicLedger DSP stream events.
+    columns:
+      - name: stream_id
+        description: Unique stream event identifier.
+        tests:
+          - not_null
+          - unique
+      - name: artist_id
+        description: Stable artist identifier used across the SonicLedger lineage chain.
+        tests:
+          - not_null
+      - name: royalty_amount
+        description: Per-event royalty value.
+        tests:
+          - not_null
+          - is_positive
+
+  - name: fct_royalties
+    description: Fact table preserving one royalty record per stream event.
+    columns:
+      - name: stream_id
+        description: Unique stream event identifier.
+        tests:
+          - not_null
+          - unique
+      - name: artist_id
+        description: Stable artist identifier used across the SonicLedger lineage chain.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('artist_payouts')
+                field: artist_id
+      - name: royalty_amount
+        description: Per-event royalty value.
+        tests:
+          - not_null
+          - is_positive
+
+  - name: artist_payouts
+    description: Artist-level royalty aggregation used for downstream finance review.
+    columns:
+      - name: artist_id
+        description: Stable artist identifier used across the SonicLedger lineage chain.
+        tests:
+          - not_null
+          - unique
+      - name: total_streams
+        description: Total streams per artist.
+        tests:
+          - not_null
+          - is_positive
+      - name: total_royalty_amount
+        description: Total royalty amount per artist.
+        tests:
+          - not_null
+          - is_positive
+
+  - name: finance_royalty_dashboard
+    description: Finance-facing SonicLedger dashboard mart.
+    columns:
+      - name: artist_id
+        description: Stable artist identifier used across the SonicLedger lineage chain.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('artist_payouts')
+                field: artist_id
+      - name: total_royalty_amount
+        description: Total royalty amount per artist.
+        tests:
+          - not_null
+          - is_positive

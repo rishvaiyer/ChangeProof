@@ -1,0 +1,27 @@
+name: sonicledger
+version: 1.0.0
+config-version: 2
+
+profile: sonicledger
+
+model-paths:
+  - models
+seed-paths:
+  - seeds
+test-paths:
+  - tests
+target-path: target
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  sonicledger:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+
+seeds:
+  sonicledger:
+    +quote_columns: false

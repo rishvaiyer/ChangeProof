@@ -9,3 +9,6 @@ dist/
 *.egg-info/
 .env
 .DS_Store
+demo/sonicledger/target/
+demo/sonicledger/logs/
+demo/sonicledger/.user.yml
