@@ -27,6 +27,7 @@ from datahub.metadata.schema_classes import (
     SchemaFieldClass,
     SchemaFieldDataTypeClass,
     SchemaMetadataClass,
+    SchemalessClass,
     StringTypeClass,
     TagAssociationClass,
     TagPropertiesClass,
@@ -271,7 +272,7 @@ def emit_datasets(graph: DataHubGraph, specs: dict[str, DatasetSpec]) -> list[st
                 platform=platform_urn,
                 version=0,
                 hash="",
-                platformSchema=None,
+                platformSchema=SchemalessClass(),
                 fields=[schema_field(spec.urn, field_spec) for field_spec in spec.fields],
             ),
         )
