@@ -13,7 +13,7 @@ from mcp.client.stdio import stdio_client
 from .config import Settings
 from .models import LineageNode, MetadataEvidence
 
-REQUIRED_DATAHUB_TOOLS = frozenset({"get_entities", "get_lineage", "list_schema_fields"})
+REQUIRED_DATAHUB_TOOLS = frozenset({"get_lineage", "list_schema_fields"})
 DATAHUB_LINEAGE_MAX_HOPS = 3
 
 SessionFactory = Callable[[], AsyncIterator[Any]]
@@ -78,27 +78,6 @@ class DataHubMcpClient:
                 if hop <= DATAHUB_LINEAGE_MAX_HOPS
             ]
 
-            downstream_urns = [
-                urn
-                for urn in (
-                    self._entity_urn(result.get("entity")) for result, _hop in bounded_results
-                )
-                if urn is not None
-            ]
-            entity_payload = await self._call_tool(
-                session,
-                "get_entities",
-                {"urns": [source_urn, *downstream_urns]},
-            )
-            entities = self._coerce_entities(entity_payload)
-            entities_by_urn = {
-                entity_urn: entity
-                for entity in entities
-                if isinstance(entity, Mapping)
-                for entity_urn in [self._entity_urn(entity)]
-                if entity_urn is not None
-            }
-
             downstream_nodes: list[LineageNode] = []
             column_lineage_available = False
             for result, hop in bounded_results:
@@ -114,7 +93,6 @@ class DataHubMcpClient:
                 if lineage_columns:
                     column_lineage_available = True
 
-                details = entities_by_urn.get(entity_urn, {})
                 downstream_nodes.append(
                     LineageNode(
                         urn=entity_urn,
@@ -122,8 +100,8 @@ class DataHubMcpClient:
                         entity_type=self._entity_type(entity),
                         hop=hop,
                         fields=lineage_columns,
-                        owners=self._owner_emails(details),
-                        critical=self._is_critical(details),
+                        owners=self._owner_emails(entity),
+                        critical=self._is_critical(entity),
                     )
                 )
 
@@ -138,7 +116,7 @@ class DataHubMcpClient:
                 source_field=source_field,
                 column_lineage_available=column_lineage_available,
                 downstream=downstream_nodes,
-                owners=self._owner_emails(entities_by_urn.get(source_urn, {})),
+                owners=[],
                 assertions_passing=None,
                 metadata_age_hours=0.0,
                 missing=missing,
@@ -218,11 +196,6 @@ class DataHubMcpClient:
             return None
         return json.loads(raw_text)
 
-    def _coerce_entities(self, payload: dict[str, Any]) -> list[Mapping[str, Any]]:
-        if isinstance(payload, list):
-            return [entity for entity in payload if isinstance(entity, Mapping)]
-        return [payload] if isinstance(payload, Mapping) else []
-
     def _lineage_columns(self, result: Mapping[str, Any]) -> list[str]:
         columns = result.get("lineageColumns")
         return [column for column in self._as_list(columns) if isinstance(column, str)]
@@ -255,7 +228,7 @@ class DataHubMcpClient:
         return emails
 
     def _is_critical(self, entity: Mapping[str, Any]) -> bool:
-        global_tags = entity.get("globalTags")
+        global_tags = entity.get("tags") or entity.get("globalTags")
         if not isinstance(global_tags, Mapping):
             return False
 
@@ -269,14 +242,17 @@ class DataHubMcpClient:
             if not isinstance(properties, Mapping):
                 continue
             tag_name = properties.get("name")
-            if isinstance(tag_name, str) and tag_name.lower() == "critical":
+            if isinstance(tag_name, str) and tag_name.lower() in {
+                "critical",
+                "changeproofcritical",
+            }:
                 return True
         return False
 
     def _entity_name(self, entity: Mapping[str, Any], *, fallback_urn: str) -> str:
         name = entity.get("name")
         if isinstance(name, str) and name:
-            return name
+            return name.rsplit(".", 1)[-1]
         return fallback_urn.split(",")[1].split(".")[-1]
 
     def _entity_type(self, entity: Mapping[str, Any]) -> str:

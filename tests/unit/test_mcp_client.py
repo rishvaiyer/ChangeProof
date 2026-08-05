@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import pytest
-from mcp.types import EmbeddedResource, TextContent, TextResourceContents
+from mcp.types import TextContent
 
 from changeproof.config import Settings
 from changeproof.mcp_client import DataHubMcpClient
@@ -89,7 +89,29 @@ def test_get_downstream_context_normalizes_fake_mcp_content_blocks() -> None:
                     "entity": {
                         "urn": PAYOUTS_URN,
                         "type": "DATASET",
-                        "name": "artist_payouts",
+                        "name": "sonicledger.models.marts.artist_payouts",
+                        "ownership": {
+                            "owners": [
+                                {
+                                    "owner": {
+                                        "properties": {
+                                            "email": "finance@sonicledger.demo",
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "tags": {
+                            "tags": [
+                                {
+                                    "tag": {
+                                        "properties": {
+                                            "name": "ChangeProofCritical",
+                                        }
+                                    }
+                                }
+                            ]
+                        },
                     },
                     "degree": 2,
                     "lineageColumns": ["rights_holder_id"],
@@ -97,49 +119,8 @@ def test_get_downstream_context_normalizes_fake_mcp_content_blocks() -> None:
             ]
         }
     }
-    entities_payload = [
-        {
-            "urn": SOURCE_URN,
-            "ownership": {
-                "owners": [
-                    {
-                        "owner": {
-                            "properties": {
-                                "email": "analytics@sonicledger.demo",
-                            }
-                        }
-                    }
-                ]
-            },
-        },
-        {
-            "urn": PAYOUTS_URN,
-            "ownership": {
-                "owners": [
-                    {
-                        "owner": {
-                            "properties": {
-                                "email": "finance@sonicledger.demo",
-                            }
-                        }
-                    }
-                ]
-            },
-            "globalTags": {
-                "tags": [
-                    {
-                        "tag": {
-                            "properties": {
-                                "name": "critical",
-                            }
-                        }
-                    }
-                ]
-            },
-        },
-    ]
     session = FakeSession(
-        tool_names=["list_schema_fields", "get_lineage", "get_entities"],
+        tool_names=["list_schema_fields", "get_lineage"],
         tool_results={
             "list_schema_fields": FakeCallToolResult(
                 structured_content={
@@ -153,18 +134,6 @@ def test_get_downstream_context_normalizes_fake_mcp_content_blocks() -> None:
             "get_lineage": FakeCallToolResult(
                 content=[TextContent(type="text", text=json.dumps(lineage_payload))]
             ),
-            "get_entities": FakeCallToolResult(
-                content=[
-                    EmbeddedResource(
-                        type="resource",
-                        resource=TextResourceContents(
-                            uri="file:///tmp/entities.json",
-                            mime_type="application/json",
-                            text=json.dumps(entities_payload),
-                        ),
-                    )
-                ]
-            ),
         },
     )
 
@@ -176,7 +145,7 @@ def test_get_downstream_context_normalizes_fake_mcp_content_blocks() -> None:
     assert evidence.source_urn.endswith("stg_streams,PROD)")
     assert evidence.source_field == "artist_id"
     assert evidence.column_lineage_available is True
-    assert evidence.owners == ["analytics@sonicledger.demo"]
+    assert evidence.owners == []
     assert [node.name for node in evidence.downstream] == ["artist_payouts"]
     assert evidence.downstream[0].fields == ["rights_holder_id"]
     assert evidence.downstream[0].owners == ["finance@sonicledger.demo"]
@@ -197,16 +166,12 @@ def test_get_downstream_context_normalizes_fake_mcp_content_blocks() -> None:
                 "max_hops": 3,
             },
         ),
-        (
-            "get_entities",
-            {"urns": [SOURCE_URN, PAYOUTS_URN]},
-        ),
     ]
 
 
 def test_get_downstream_context_keeps_table_lineage_when_column_lineage_is_missing() -> None:
     session = FakeSession(
-        tool_names=["list_schema_fields", "get_lineage", "get_entities"],
+        tool_names=["list_schema_fields", "get_lineage"],
         tool_results={
             "list_schema_fields": FakeCallToolResult(
                 structured_content={
@@ -230,12 +195,6 @@ def test_get_downstream_context_keeps_table_lineage_when_column_lineage_is_missi
                     }
                 }
             ),
-            "get_entities": FakeCallToolResult(
-                structured_content=[
-                    {"urn": SOURCE_URN},
-                    {"urn": ROYALTIES_URN},
-                ]
-            ),
         },
     )
 
@@ -252,7 +211,7 @@ def test_get_downstream_context_keeps_table_lineage_when_column_lineage_is_missi
 
 def test_get_downstream_context_bounds_official_three_plus_degree_as_hop_three() -> None:
     session = FakeSession(
-        tool_names=["list_schema_fields", "get_lineage", "get_entities"],
+        tool_names=["list_schema_fields", "get_lineage"],
         tool_results={
             "list_schema_fields": FakeCallToolResult(
                 structured_content={
@@ -286,13 +245,6 @@ def test_get_downstream_context_bounds_official_three_plus_degree_as_hop_three()
                     }
                 }
             ),
-            "get_entities": FakeCallToolResult(
-                structured_content=[
-                    {"urn": SOURCE_URN},
-                    {"urn": PAYOUTS_URN},
-                    {"urn": FAR_URN},
-                ]
-            ),
         },
     )
 
@@ -307,11 +259,11 @@ def test_get_downstream_context_bounds_official_three_plus_degree_as_hop_three()
 
 def test_get_downstream_context_rejects_missing_required_tools() -> None:
     session = FakeSession(
-        tool_names=["list_schema_fields", "get_lineage"],
+        tool_names=["list_schema_fields"],
         tool_results={},
     )
 
-    with pytest.raises(ValueError, match="Missing required DataHub MCP tools: get_entities"):
+    with pytest.raises(ValueError, match="Missing required DataHub MCP tools: get_lineage"):
         build_client(session).get_downstream_context(
             source_urn=SOURCE_URN,
             source_field="artist_id",
