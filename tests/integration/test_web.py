@@ -18,6 +18,7 @@ def test_dashboard_labels_demo_evidence() -> None:
     assert response.status_code == 200
     assert "ChangeProof" in response.text
     assert "Bundled SonicLedger demo metadata" in response.text
+    assert 'href="/static/styles.css"' in response.text
 
 
 def test_analyze_renders_downstream_impact_and_safe_fix() -> None:
