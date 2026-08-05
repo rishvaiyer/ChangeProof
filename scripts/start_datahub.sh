@@ -1,9 +1,10 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 set -euo pipefail
 
-script_dir=${0:A:h}
-repo_root=${script_dir:h}
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd -- "$script_dir/.." && pwd)"
+datahub_quickstart_cmd=(uvx --python 3.11 --from acryl-datahub datahub docker quickstart)
 
 cd "$repo_root"
-uv run datahub docker quickstart
+"${datahub_quickstart_cmd[@]}"
 uv run python scripts/check_datahub.py

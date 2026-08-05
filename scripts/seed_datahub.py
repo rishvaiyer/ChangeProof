@@ -43,6 +43,11 @@ MANIFEST_PATH = PROJECT_DIR / "target" / "manifest.json"
 PLATFORM = "dbt"
 ENVIRONMENT = "PROD"
 TAG_NAME = "ChangeProofCritical"
+EXPECTED_DOWNSTREAM_LINEAGE = (
+    "fct_royalties",
+    "artist_payouts",
+    "finance_royalty_dashboard",
+)
 DEMO_OWNERS = {
     "analytics": "analytics@sonicledger.demo",
     "finance": "finance@sonicledger.demo",
@@ -326,6 +331,22 @@ def urn_to_name(dataset_urn: str) -> str:
     return identifier.split(".")[-1]
 
 
+def validate_expected_downstream_lineage(observed: list[str]) -> None:
+    missing = [
+        dataset_name
+        for dataset_name in EXPECTED_DOWNSTREAM_LINEAGE
+        if dataset_name not in observed
+    ]
+    if missing:
+        missing_text = ", ".join(missing)
+        observed_text = ", ".join(observed) if observed else "<none>"
+        raise RuntimeError(
+            "Seeded DataHub lineage readback is incomplete. "
+            f"Missing expected downstream lineage: {missing_text}. "
+            f"Observed: {observed_text}"
+        )
+
+
 def fetch_downstream_lineage(
     gms_url: str,
     token: str,
@@ -396,6 +417,7 @@ def main() -> int:
         dataset_urn=specs["stg_streams"].urn,
         source_field="artist_id",
     )
+    validate_expected_downstream_lineage(downstream)
     print("Seeded DataHub demo metadata for:", ", ".join(sorted(specs)))
     print("Observed downstream lineage for artist_id:", ", ".join(downstream))
     return 0
