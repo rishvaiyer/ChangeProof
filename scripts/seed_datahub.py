@@ -15,6 +15,7 @@ from datahub.emitter.mce_builder import (
     make_user_urn,
 )
 from datahub.emitter.mcp import MetadataChangeProposalWrapper
+from datahub.emitter.rest_emitter import EmitMode
 from datahub.ingestion.graph.client import DataHubGraph, DatahubClientConfig
 from datahub.metadata.schema_classes import (
     CorpUserInfoClass,
@@ -205,45 +206,17 @@ def build_dataset_specs(manifest: dict[str, Any]) -> dict[str, DatasetSpec]:
     return specs
 
 
-def emit_aspect(graph: DataHubGraph, entity_urn: str, aspect: Any) -> None:
-    graph.emit(
-        MetadataChangeProposalWrapper(
-            entityUrn=entity_urn,
-            aspect=aspect,
-        )
+def build_aspect_proposal(entity_urn: str, aspect: Any) -> MetadataChangeProposalWrapper:
+    return MetadataChangeProposalWrapper(
+        entityUrn=entity_urn,
+        aspect=aspect,
     )
 
 
-def emit_reference_entities(graph: DataHubGraph) -> list[str]:
-    emitted = []
-
-    tag_urn = make_tag_urn(TAG_NAME)
-    emit_aspect(
-        graph,
-        tag_urn,
-        TagPropertiesClass(
-            name=TAG_NAME,
-            description="Marks downstream SonicLedger assets that ChangeProof treats as critical.",
-        ),
-    )
-    emitted.append(tag_urn)
-
-    for owner_email in DEMO_OWNERS.values():
-        owner_urn = make_user_urn(owner_email)
-        emit_aspect(
-            graph,
-            owner_urn,
-            CorpUserInfoClass(
-                active=True,
-                displayName=owner_email,
-                email=owner_email,
-                fullName=owner_email,
-                title="Demo owner",
-            ),
-        )
-        emitted.append(owner_urn)
-
-    return emitted
+def emit_proposals(graph: DataHubGraph, proposals: list[MetadataChangeProposalWrapper]) -> None:
+    if not proposals:
+        return
+    graph.emit_mcps(proposals, emit_mode=EmitMode.SYNC_PRIMARY)
 
 
 def schema_field(dataset_urn: str, spec: FieldSpec) -> SchemaFieldClass:
@@ -257,40 +230,85 @@ def schema_field(dataset_urn: str, spec: FieldSpec) -> SchemaFieldClass:
     )
 
 
-def emit_datasets(graph: DataHubGraph, specs: dict[str, DatasetSpec]) -> list[str]:
+def build_reference_entity_proposals() -> tuple[list[MetadataChangeProposalWrapper], list[str]]:
+    proposals: list[MetadataChangeProposalWrapper] = []
+    emitted: list[str] = []
+
+    tag_urn = make_tag_urn(TAG_NAME)
+    proposals.append(
+        build_aspect_proposal(
+            tag_urn,
+            TagPropertiesClass(
+                name=TAG_NAME,
+                description="Marks downstream SonicLedger assets that ChangeProof treats as critical.",
+            ),
+        )
+    )
+    emitted.append(tag_urn)
+
+    for owner_email in DEMO_OWNERS.values():
+        owner_urn = make_user_urn(owner_email)
+        proposals.append(
+            build_aspect_proposal(
+                owner_urn,
+                CorpUserInfoClass(
+                    active=True,
+                    displayName=owner_email,
+                    email=owner_email,
+                    fullName=owner_email,
+                    title="Demo owner",
+                ),
+            )
+        )
+        emitted.append(owner_urn)
+
+    return proposals, emitted
+
+
+def emit_reference_entities(graph: DataHubGraph) -> list[str]:
+    proposals, emitted = build_reference_entity_proposals()
+    emit_proposals(graph, proposals)
+    return emitted
+
+
+def build_dataset_proposals(specs: dict[str, DatasetSpec]) -> tuple[list[MetadataChangeProposalWrapper], list[str]]:
+    proposals: list[MetadataChangeProposalWrapper] = []
     emitted_urns: list[str] = []
     tag_urn = make_tag_urn(TAG_NAME)
     platform_urn = make_data_platform_urn(PLATFORM)
 
     for model_name, spec in specs.items():
-        emit_aspect(graph, spec.urn, DatasetPropertiesClass(description=spec.description))
-        emit_aspect(
-            graph,
-            spec.urn,
-            SchemaMetadataClass(
-                schemaName=model_name,
-                platform=platform_urn,
-                version=0,
-                hash="",
-                platformSchema=SchemalessClass(),
-                fields=[schema_field(spec.urn, field_spec) for field_spec in spec.fields],
-            ),
+        proposals.append(build_aspect_proposal(spec.urn, DatasetPropertiesClass(description=spec.description)))
+        proposals.append(
+            build_aspect_proposal(
+                spec.urn,
+                SchemaMetadataClass(
+                    schemaName=model_name,
+                    platform=platform_urn,
+                    version=0,
+                    hash="",
+                    platformSchema=SchemalessClass(),
+                    fields=[schema_field(spec.urn, field_spec) for field_spec in spec.fields],
+                ),
+            )
         )
-        emit_aspect(
-            graph,
-            spec.urn,
-            OwnershipClass(
-                owners=[
-                    OwnerClass(owner=make_user_urn(owner_email), type=OwnershipTypeClass.DATAOWNER)
-                    for owner_email in spec.owners
-                ]
-            ),
+        proposals.append(
+            build_aspect_proposal(
+                spec.urn,
+                OwnershipClass(
+                    owners=[
+                        OwnerClass(owner=make_user_urn(owner_email), type=OwnershipTypeClass.DATAOWNER)
+                        for owner_email in spec.owners
+                    ]
+                ),
+            )
         )
         if spec.critical:
-            emit_aspect(
-                graph,
-                spec.urn,
-                GlobalTagsClass(tags=[TagAssociationClass(tag=tag_urn)]),
+            proposals.append(
+                build_aspect_proposal(
+                    spec.urn,
+                    GlobalTagsClass(tags=[TagAssociationClass(tag=tag_urn)]),
+                )
             )
 
         fine_grained: list[FineGrainedLineageClass] = []
@@ -305,23 +323,48 @@ def emit_datasets(graph: DataHubGraph, specs: dict[str, DatasetSpec]) -> list[st
                     )
                 )
 
-        emit_aspect(
-            graph,
-            spec.urn,
-            UpstreamLineageClass(
-                upstreams=[UpstreamClass(dataset=upstream_urn, type="TRANSFORMED") for upstream_urn in spec.upstreams],
-                fineGrainedLineages=fine_grained,
-            ),
+        proposals.append(
+            build_aspect_proposal(
+                spec.urn,
+                UpstreamLineageClass(
+                    upstreams=[UpstreamClass(dataset=upstream_urn, type="TRANSFORMED") for upstream_urn in spec.upstreams],
+                    fineGrainedLineages=fine_grained,
+                ),
+            )
         )
 
         emitted_urns.append(spec.urn)
         emitted_urns.extend(make_schema_field_urn(spec.urn, field.name) for field in spec.fields)
 
+    return proposals, emitted_urns
+
+
+def emit_datasets(graph: DataHubGraph, specs: dict[str, DatasetSpec]) -> list[str]:
+    proposals, emitted_urns = build_dataset_proposals(specs)
+    emit_proposals(graph, proposals)
     return emitted_urns
 
 
+def schema_field_present(graph: DataHubGraph, schema_field_urn: str) -> bool:
+    prefix = "urn:li:schemaField:("
+    if not schema_field_urn.startswith(prefix) or not schema_field_urn.endswith(")"):
+        return False
+
+    dataset_urn, field_path = schema_field_urn[len(prefix):-1].rsplit(",", 1)
+    schema = graph.get_aspect(dataset_urn, SchemaMetadataClass)
+    return schema is not None and any(field.fieldPath == field_path for field in schema.fields)
+
+
 def verify_emitted_urns(graph: DataHubGraph, urns: list[str]) -> None:
-    missing = [urn for urn in urns if not graph.exists(urn)]
+    missing = [
+        urn
+        for urn in urns
+        if not (
+            schema_field_present(graph, urn)
+            if urn.startswith("urn:li:schemaField:")
+            else graph.exists(urn)
+        )
+    ]
     if missing:
         missing_text = "\n".join(missing)
         raise RuntimeError(f"Failed to read back emitted URNs:\n{missing_text}")
@@ -353,18 +396,20 @@ def fetch_downstream_lineage(
     token: str,
     dataset_urn: str,
     source_field: str,
+    dataset_urns: list[str] | None = None,
 ) -> list[str]:
     graph = build_graph(gms_url=gms_url, token=token)
     source_field_urn = make_schema_field_urn(dataset_urn, source_field)
 
-    dataset_urns = list(
-        graph.get_urns_by_filter(
-            entity_types=["dataset"],
-            platform=PLATFORM,
-            env=ENVIRONMENT,
-            query="sonicledger",
+    if dataset_urns is None:
+        dataset_urns = list(
+            graph.get_urns_by_filter(
+                entity_types=["dataset"],
+                platform=PLATFORM,
+                env=ENVIRONMENT,
+                query="sonicledger",
+            )
         )
-    )
     upstream_by_dataset = {
         urn: graph.get_aspect(urn, UpstreamLineageClass) for urn in dataset_urns
     }
@@ -417,6 +462,7 @@ def main() -> int:
         token=settings.datahub_gms_token,
         dataset_urn=specs["stg_streams"].urn,
         source_field="artist_id",
+        dataset_urns=[spec.urn for spec in specs.values()],
     )
     validate_expected_downstream_lineage(downstream)
     print("Seeded DataHub demo metadata for:", ", ".join(sorted(specs)))
