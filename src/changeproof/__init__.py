@@ -1,5 +1,6 @@
 from .classifier import classify_schema_change
 from .config import Settings
+from .impact import assess_impact
 from .mcp_client import DataHubMcpClient
 from .models import (
     ChangeProofReport,
@@ -16,6 +17,7 @@ from .models import (
     ValidationResult,
     WritebackResult,
 )
+from .planner import plan_remediation
 
 __all__ = [
     "ChangeProofReport",
@@ -33,5 +35,7 @@ __all__ = [
     "Settings",
     "ValidationResult",
     "WritebackResult",
+    "assess_impact",
     "classify_schema_change",
+    "plan_remediation",
 ]
