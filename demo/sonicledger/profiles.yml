@@ -1,0 +1,7 @@
+sonicledger:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: demo/sonicledger/target/sonicledger.duckdb
+      threads: 1

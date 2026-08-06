@@ -1,0 +1,24 @@
+{
+  "dataset_urn": "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.staging.stg_streams,PROD)",
+  "source_file": "models/staging/stg_streams.sql",
+  "before_schema": [
+    {
+      "fieldPath": "artist_id",
+      "nativeDataType": "varchar"
+    },
+    {
+      "fieldPath": "track_id",
+      "nativeDataType": "varchar"
+    }
+  ],
+  "after_schema": [
+    {
+      "fieldPath": "rights_holder_id",
+      "nativeDataType": "varchar"
+    },
+    {
+      "fieldPath": "track_id",
+      "nativeDataType": "varchar"
+    }
+  ]
+}
