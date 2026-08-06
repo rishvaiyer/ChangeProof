@@ -24,9 +24,19 @@ class DemoAnalysis:
     evidence: MetadataEvidence
     impact: ImpactAssessment
     plan: RemediationPlan
+    evidence_source: str
 
 
 def analyze_demo_change(*, column: str, old_type: str, new_type: str) -> DemoAnalysis:
+    request = build_demo_request(column=column, old_type=old_type, new_type=new_type)
+    return compose_analysis(
+        request=request,
+        evidence=_demo_evidence(),
+        evidence_source="Bundled SonicLedger demo metadata",
+    )
+
+
+def build_demo_request(*, column: str, old_type: str, new_type: str) -> ChangeRequest:
     column = column.strip()
     old_type = old_type.strip()
     new_type = new_type.strip()
@@ -35,19 +45,24 @@ def analyze_demo_change(*, column: str, old_type: str, new_type: str) -> DemoAna
     if not old_type or not new_type or old_type == new_type:
         raise ValueError("Old and new types must be different non-empty values.")
 
-    request = classify_schema_change(
+    return classify_schema_change(
         before_schema=[{"fieldPath": column, "nativeDataType": old_type}],
         after_schema=[{"fieldPath": column, "nativeDataType": new_type}],
         source_file=Path("models/staging/stg_streams.sql"),
         dataset_urn=SOURCE_URN,
     )
-    evidence = _demo_evidence()
+
+
+def compose_analysis(
+    *, request: ChangeRequest, evidence: MetadataEvidence, evidence_source: str
+) -> DemoAnalysis:
     impact = assess_impact(evidence)
     return DemoAnalysis(
         request=request,
         evidence=evidence,
         impact=impact,
         plan=plan_remediation(request, impact),
+        evidence_source=evidence_source,
     )
 
 
