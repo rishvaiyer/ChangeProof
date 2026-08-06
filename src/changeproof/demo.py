@@ -18,6 +18,10 @@ SOURCE_URN = (
 )
 
 
+class DemoInputError(ValueError):
+    pass
+
+
 @dataclass(frozen=True)
 class DemoAnalysis:
     request: ChangeRequest
@@ -41,9 +45,9 @@ def build_demo_request(*, column: str, old_type: str, new_type: str) -> ChangeRe
     old_type = old_type.strip()
     new_type = new_type.strip()
     if column != "artist_id":
-        raise ValueError("Supported demo column: artist_id")
+        raise DemoInputError("Supported demo column: artist_id")
     if not old_type or not new_type or old_type == new_type:
-        raise ValueError("Old and new types must be different non-empty values.")
+        raise DemoInputError("Old and new types must be different non-empty values.")
 
     return classify_schema_change(
         before_schema=[{"fieldPath": column, "nativeDataType": old_type}],

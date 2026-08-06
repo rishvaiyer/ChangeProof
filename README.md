@@ -144,7 +144,7 @@ The live test is opt-in so ordinary test runs do not require Docker or a running
 uv run pytest -q
 ```
 
-Current verified result: **46 passed, 1 opt-in live test skipped**.
+Current verified result: **51 passed, 1 opt-in live test skipped**.
 
 The public deployment also exposes:
 

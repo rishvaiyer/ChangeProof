@@ -1,3 +1,4 @@
+import anyio
 from fastapi.testclient import TestClient
 
 from changeproof.app import app, create_app, provider_from_env
@@ -56,11 +57,19 @@ def test_dashboard_displays_injected_live_evidence_label() -> None:
             evidence_source="Live DataHub MCP evidence",
         )
 
-    response = TestClient(create_app(live_provider)).get("/")
+    live_client = TestClient(create_app(live_provider))
+    response = live_client.get("/")
+    post_response = live_client.post(
+        "/analyze",
+        data={"column": "artist_id", "old_type": "varchar", "new_type": "bigint"},
+    )
 
     assert response.status_code == 200
     assert "Live DataHub MCP evidence" in response.text
     assert "Bundled SonicLedger demo metadata" not in response.text
+    assert post_response.status_code == 200
+    assert "Live DataHub MCP evidence" in post_response.text
+    assert "artist_payouts" in post_response.text
 
 
 def test_live_provider_failure_returns_503_without_demo_fallback() -> None:
@@ -72,6 +81,39 @@ def test_live_provider_failure_returns_503_without_demo_fallback() -> None:
     assert response.status_code == 503
     assert "DataHub MCP unavailable" in response.text
     assert "Bundled SonicLedger demo metadata" not in response.text
+
+
+def test_mcp_value_error_is_service_failure_not_input_error() -> None:
+    def missing_tools_provider(**values: str):
+        raise ValueError("Missing required DataHub MCP tools: get_lineage")
+
+    failure_client = TestClient(create_app(missing_tools_provider))
+    get_response = failure_client.get("/")
+    post_response = failure_client.post(
+        "/analyze",
+        data={"column": "artist_id", "old_type": "varchar", "new_type": "bigint"},
+    )
+
+    assert get_response.status_code == 503
+    assert post_response.status_code == 503
+    assert "Missing required DataHub MCP tools" in post_response.text
+
+
+def test_post_runs_sync_mcp_style_provider_outside_async_event_loop() -> None:
+    async def async_probe() -> None:
+        return None
+
+    def mcp_style_provider(**values: str):
+        anyio.run(async_probe)
+        return analyze_demo_change(**values)
+
+    response = TestClient(create_app(mcp_style_provider)).post(
+        "/analyze",
+        data={"column": "artist_id", "old_type": "varchar", "new_type": "bigint"},
+    )
+
+    assert response.status_code == 200
+    assert "parallel_typed_field" in response.text
 
 
 def test_provider_from_env_defaults_to_bundled(monkeypatch) -> None:

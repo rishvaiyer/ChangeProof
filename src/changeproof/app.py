@@ -7,8 +7,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.concurrency import run_in_threadpool
 
-from .demo import DemoAnalysis, analyze_demo_change
+from .demo import DemoAnalysis, DemoInputError, analyze_demo_change
 from .live import analyze_live_change
 
 PACKAGE_DIR = Path(__file__).parent
@@ -44,7 +45,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
     def dashboard(request: Request) -> HTMLResponse:
         try:
             analysis = current_provider()(**DEFAULT_VALUES)
-        except RuntimeError as exc:
+        except (RuntimeError, ValueError) as exc:
             return _render(
                 request,
                 analysis=None,
@@ -59,12 +60,13 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         form = parse_qs((await request.body()).decode("utf-8"))
         values = {key: items[0] if items else "" for key, items in form.items()}
         try:
-            analysis = current_provider()(
+            analysis = await run_in_threadpool(
+                current_provider(),
                 column=values.get("column", ""),
                 old_type=values.get("old_type", ""),
                 new_type=values.get("new_type", ""),
             )
-        except ValueError as exc:
+        except DemoInputError as exc:
             return _render(
                 request,
                 analysis=None,
@@ -72,7 +74,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 error=str(exc),
                 status_code=422,
             )
-        except RuntimeError as exc:
+        except (RuntimeError, ValueError) as exc:
             return _render(
                 request,
                 analysis=None,
