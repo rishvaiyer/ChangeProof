@@ -8,6 +8,7 @@ build/
 dist/
 *.egg-info/
 .env
+.changeproof/
 .DS_Store
 demo/sonicledger/target/
 demo/sonicledger/logs/

@@ -115,6 +115,20 @@ Open [http://localhost:8000](http://localhost:8000).
 
 Docker Desktop should have enough memory available for DataHub Quickstart. The repository invokes the DataHub CLI through Python 3.11 for quickstart compatibility while the ChangeProof application remains on Python 3.12.
 
+For the complete judge demo, run one command:
+
+```bash
+make live-demo
+```
+
+This builds the synthetic SonicLedger DuckDB pipeline, starts and seeds DataHub, verifies the lineage through the official MCP server, and leaves the live-evidence dashboard running. Open ChangeProof at [http://localhost:8000](http://localhost:8000) and DataHub at [http://localhost:9002](http://localhost:9002). Use `artist_id / varchar / bigint`, then stop both services with:
+
+```bash
+make demo-stop
+```
+
+The individual commands remain available for troubleshooting:
+
 ```bash
 make datahub-up
 make datahub-seed
@@ -130,7 +144,7 @@ The live test is opt-in so ordinary test runs do not require Docker or a running
 uv run pytest -q
 ```
 
-Current verified result: **34 passed, 1 opt-in live test skipped**.
+Current verified result: **46 passed, 1 opt-in live test skipped**.
 
 The public deployment also exposes:
 

@@ -10,3 +10,9 @@ datahub-down:
 
 datahub-seed:
 	uv run python scripts/seed_datahub.py
+
+live-demo:
+	./scripts/live_demo.sh
+
+demo-stop:
+	./scripts/stop_live_demo.sh

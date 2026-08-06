@@ -22,6 +22,7 @@ def test_analyze_demo_type_change_returns_impact_and_safe_plan() -> None:
     ]
     assert result.plan.strategy == "parallel_typed_field"
     assert result.plan.rollout_steps
+    assert result.evidence_source == "Bundled SonicLedger demo metadata"
 
 
 def test_analyze_demo_rejects_unknown_column() -> None:
