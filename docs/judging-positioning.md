@@ -35,6 +35,7 @@ ChangeProof tells you what to **do about a change you have not made yet**.
 | Hypothetical change simulation | ChangeProof | **New.** DataHub has no notion of a proposed, unapplied change. |
 | Evidence scoring across hop distance, ownership, critical tags | ChangeProof | **New.** DataHub exposes the signals; it does not weigh them against a specific edit. |
 | Staged remediation plan: parallel typed field, ordered downstream migration, validation gates, rollback steps | ChangeProof | **New.** This is an artifact DataHub does not produce. |
+| Writing the decision back as incidents, tags, and documentation | DataHub GraphQL mutations, behind a human approval gate | **Composed.** Standard DataHub write APIs. What is new is the draft-and-approve gate and the content ChangeProof puts in them. |
 
 ### The one-sentence version
 
@@ -87,6 +88,30 @@ onto how migrations are really run.
 
 ---
 
+---
+
+## Beyond metadata reading
+
+> *"Depth of DataHub usage: does the submission go beyond basic metadata
+> reading?"*
+
+ChangeProof reads through the official MCP server and writes back through
+DataHub's GraphQL mutations. The write path is deliberately gated:
+
+1. Every analysis drafts its write-backs: an incident on the source dataset, a
+   `changeproof-pending-change` tag on each critical downstream asset, and the
+   migration plan as documentation.
+2. Nothing is sent until a human approves specific drafts.
+3. On approval the proposals are **rebuilt on the server** from the analysis.
+   The request carries proposal ids, never content, so an approval cannot push
+   arbitrary text into the catalog.
+4. With no DataHub reachable, approval is refused with a plain message rather
+   than simulated.
+
+The agent proposes. A human disposes. That gate is the point, not a limitation:
+an agent that can silently write to a company's metadata catalog is not one a
+platform team would install.
+
 ## Proof
 
 - Repository: <https://github.com/rishvaiyer/ChangeProof>
@@ -102,3 +127,5 @@ State these plainly; they cost nothing and they protect every other claim.
 - The live DataHub integration runs locally and is opt-in.
 - Remediation plans are rule-derived. No AI-generated remediation is claimed.
 - The hosted demo is not connected to DataHub Cloud.
+- Write-back needs a reachable DataHub. On the hosted demo the drafts are
+  visible and approval is refused, not faked.

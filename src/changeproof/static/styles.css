@@ -78,6 +78,26 @@ li::before { content: counter(steps, decimal-leading-zero); position: absolute; 
 footer { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 11px; border-top: 1px solid var(--line); margin-top: 72px; padding: 28px 0 44px; }
 footer span { color: var(--text); font-weight: 700; }
 
+.writeback { margin-top: 68px; border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(18px); border-radius: 18px; padding: 28px; box-shadow: 0 24px 80px rgba(0,0,0,.22); }
+.writeback .scenario { color: var(--amber); }
+.writeback form { display: block; }
+.proposal label span { display: inline; margin: 0; letter-spacing: normal; text-transform: none; font-size: inherit; }
+.proposal-list, .writeback-results { margin: 0 0 26px; padding: 0; list-style: none; }
+.proposal-list li, .writeback-results li { counter-increment: none; padding: 0; }
+.proposal-list li::before, .writeback-results li::before { content: none; }
+.proposal { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; background: var(--panel); }
+.proposal label { display: flex; align-items: center; gap: 11px; cursor: pointer; }
+.proposal input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--cyan); cursor: pointer; flex: none; }
+.proposal label .proposal-action { color: var(--cyan); background: var(--cyan-dim); padding: 4px 8px; border-radius: 5px; font: 700 9px ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; flex: none; }
+.proposal-title { color: var(--text); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.proposal-rationale { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 12px 0 0 28px; }
+.proposal-body { color: #c9d9df; background: rgba(4, 12, 18, .55); border: 1px solid var(--line); border-radius: 7px; margin: 14px 0 0 28px; padding: 14px; font: 400 11px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 190px; overflow-y: auto; }
+.writeback-results li { border-left: 2px solid var(--line); padding: 9px 0 9px 14px; margin-bottom: 8px; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.writeback-results li.applied { border-left-color: var(--cyan); }
+.writeback-results li.failed { border-left-color: var(--red); }
+.writeback-results strong { color: var(--text); }
+.writeback-results code { color: var(--cyan); font-size: 11px; }
+
 @media (max-width: 900px) {
   form { grid-template-columns: 1fr 1fr; }
   .arrow { display: none; }
@@ -94,7 +114,8 @@ footer span { color: var(--text); font-weight: 700; }
   .evidence-badge { max-width: 170px; text-align: right; line-height: 1.35; }
   .hero { padding: 60px 0 48px; }
   .lede { font-size: 15px; }
-  .analyzer, .solution { padding: 20px; }
+  .analyzer, .solution, .writeback { padding: 20px; }
+  .proposal-rationale, .proposal-body { margin-left: 0; }
   form, .summary-grid, .plan-grid { grid-template-columns: 1fr; }
   .plan-grid > .rollback { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; }
   .section-heading { align-items: flex-start; flex-direction: column; }

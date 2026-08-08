@@ -97,11 +97,30 @@ class ValidationResult(BaseModel):
     output_excerpt: str
 
 
+class ProposalAction(StrEnum):
+    RAISE_INCIDENT = "raise_incident"
+    ADD_TAG = "add_tag"
+    UPDATE_DOCS = "update_docs"
+
+
+class ChangeProposal(BaseModel):
+    proposal_id: str
+    action: ProposalAction
+    target_urn: str
+    target_name: str
+    title: str
+    body: str
+    rationale: str
+
+
 class WritebackResult(BaseModel):
     succeeded: bool
     dataset_urn: str
     properties_written: dict[str, str] = Field(default_factory=dict)
     error: str | None = None
+    proposal_id: str | None = None
+    action: ProposalAction | None = None
+    applied: bool = False
 
 
 class ChangeProofReport(BaseModel):

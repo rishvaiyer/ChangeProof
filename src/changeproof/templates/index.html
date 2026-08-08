@@ -126,6 +126,53 @@
             </div>
           </div>
         </section>
+
+        {% if proposals %}
+        <section class="writeback">
+          <div class="section-heading">
+            <div>
+              <p class="step-label">04 · WRITE BACK</p>
+              <h2>Draft changes for DataHub</h2>
+            </div>
+            <span class="scenario">Nothing is written without approval</span>
+          </div>
+          <p class="solution-summary">ChangeProof drafts these entries and stops. Approving sends only the selected items, rebuilt on the server, to DataHub.</p>
+
+          {% if writeback_results %}
+          <ul class="writeback-results">
+            {% for result in writeback_results %}
+            <li class="{{ 'applied' if result.applied else 'failed' }}">
+              <strong>{{ result.action.value if result.action else 'unknown' }}</strong>
+              on <code>{{ result.dataset_urn }}</code>
+              {% if result.applied %}written to DataHub{% else %}failed: {{ result.error }}{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+
+          {% if writeback_error %}<p class="error" role="alert">{{ writeback_error }}</p>{% endif %}
+
+          <form action="/writeback/apply" method="post">
+            <input type="hidden" name="column" value="{{ values.get('column', 'artist_id') }}">
+            <input type="hidden" name="old_type" value="{{ values.get('old_type', 'varchar') }}">
+            <input type="hidden" name="new_type" value="{{ values.get('new_type', 'bigint') }}">
+            <ul class="proposal-list">
+              {% for proposal in proposals %}
+              <li class="proposal">
+                <label>
+                  <input type="checkbox" name="approve" value="{{ proposal.proposal_id }}">
+                  <span class="proposal-action">{{ proposal.action.value }}</span>
+                  <span class="proposal-title">{{ proposal.title }}</span>
+                </label>
+                <p class="proposal-rationale">{{ proposal.rationale }}</p>
+                <pre class="proposal-body">{{ proposal.body }}</pre>
+              </li>
+              {% endfor %}
+            </ul>
+            <button type="submit">Approve and write back <span>↗</span></button>
+          </form>
+        </section>
+        {% endif %}
       </section>
       {% endif %}
 

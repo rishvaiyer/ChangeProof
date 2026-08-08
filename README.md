@@ -13,6 +13,7 @@ ChangeProof uses DataHub metadata to trace the observed downstream impact of a p
 1. **Propose a change.** Change `stg_streams.artist_id` from `varchar` to `bigint`.
 2. **Trace the blast radius.** ChangeProof follows column-level lineage, ownership, critical tags, and hop distance through DataHub.
 3. **Ship a safer plan.** The engine recommends a parallel typed field, staged downstream migration, validation gates, and explicit rollback steps.
+4. **Write the decision back.** ChangeProof drafts a DataHub incident, critical-asset tags, and documentation, then stops. Approving a draft sends only that item to DataHub.
 
 Try the prepared scenario in the [live dashboard](https://changeproof-production.up.railway.app/):
 
@@ -66,6 +67,7 @@ The project consumes DataHub as an operational decision graph, not just a catalo
 - Lineage degree, bounded to three hops
 - Schema-field presence and metadata completeness
 - Official DataHub MCP tool contracts for schema and lineage reads
+- Draft-and-approve write-back of incidents, tags, and documentation
 
 The local fixture seeds a real dbt lineage chain into DataHub, including fine-grained `artist_id` propagation. ChangeProof then asks DataHub which observed consumers are exposed before recommending a rollout.
 
@@ -150,6 +152,7 @@ The public deployment also exposes:
 
 - `GET /` for the dashboard
 - `POST /analyze` for the prepared schema-change analysis
+- `POST /writeback/apply` to apply approved draft write-backs
 - `GET /healthz` for Railway health verification
 
 ## Project structure
@@ -167,6 +170,7 @@ tests/              unit, dbt integration, web, and opt-in live DataHub tests
 - The public form demonstrates the prepared `artist_id` type-change scenario.
 - Remediation is deterministic; AI-generated review is not enabled yet.
 - Dynamic SQL and unobserved external consumers require explicit human review.
+- Write-back requires a reachable DataHub. On the hosted demo the drafts render and approval is refused rather than simulated.
 
 These boundaries are visible because ChangeProof is meant to support data-engineering decisions, not manufacture confidence the metadata cannot justify.
 
@@ -175,7 +179,6 @@ These boundaries are visible because ChangeProof is meant to support data-engine
 - Stored-procedure parameter, result-set, and dependency-change analysis
 - Bounded AI review that explains deterministic evidence without inventing dependencies
 - Hosted DataHub or DataHub Cloud connectivity for the public demo
-- Draft-and-approve DataHub write-backs for proposed change plans
 
 ## License
 

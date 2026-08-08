@@ -137,3 +137,56 @@ def test_provider_from_env_rejects_unknown_mode(monkeypatch) -> None:
         assert "Unknown CHANGE_PROOF_EVIDENCE_MODE" in str(exc)
     else:
         raise AssertionError("Expected an unknown evidence mode to fail")
+
+
+def test_dashboard_shows_writeback_drafts_and_the_approval_gate() -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Draft changes for DataHub" in response.text
+    assert "Nothing is written without approval" in response.text
+    assert 'action="/writeback/apply"' in response.text
+    assert 'name="approve"' in response.text
+
+
+def test_writeback_requires_selecting_a_proposal() -> None:
+    response = client.post(
+        "/writeback/apply",
+        data={"column": "artist_id", "old_type": "varchar", "new_type": "bigint"},
+    )
+
+    assert response.status_code == 422
+    assert "Select at least one proposal" in response.text
+
+
+def test_writeback_refuses_when_no_datahub_is_reachable(monkeypatch) -> None:
+    # Pin to the discard port so the suite never talks to a real DataHub, even
+    # when one is running locally from `make live-demo`.
+    monkeypatch.setenv("DATAHUB_GMS_URL", "http://127.0.0.1:9")
+
+    response = client.post(
+        "/writeback/apply",
+        data={
+            "column": "artist_id",
+            "old_type": "varchar",
+            "new_type": "bigint",
+            "approve": "incident-source",
+        },
+    )
+
+    assert response.status_code == 503
+    assert "nothing was written" in response.text
+
+
+def test_writeback_validates_the_change_before_drafting() -> None:
+    response = client.post(
+        "/writeback/apply",
+        data={
+            "column": "unknown",
+            "old_type": "varchar",
+            "new_type": "bigint",
+            "approve": "incident-source",
+        },
+    )
+
+    assert response.status_code == 422
