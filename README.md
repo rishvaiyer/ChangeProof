@@ -299,9 +299,11 @@ CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context
 - Dynamic SQL and absent region metadata require manual review.
 - Regional flags are coordination signals, not legal-compliance determinations.
 
-## Why this fits the DataHub Agent Hackathon
+## DataHub-first by design
 
-The project follows the challenge’s core idea: agents become useful when they can retrieve trusted context from the data stack. It demonstrates depth of DataHub usage, a practical enterprise incident, production-minded safeguards, and an open-source implementation rather than a generic chatbot wrapper. See the [official hackathon brief](https://datahub.com/blog/build-with-datahub-agent-hackathon/) for the challenge framing.
+DataHub is the context layer behind the investigation—not a logo added after the fact. The workflow repeatedly uses asset discovery, schema fields, entities, lineage, query history, ownership, glossary terms, and structured properties to constrain each decision. The result is a practical agent workflow: metadata in, evidence-backed investigation out.
+
+The hosted demo uses a deterministic DataHub-shaped evidence bundle; the included MCP adapter switches the same workflow to live DataHub context when a tenant is available.
 
 ## Creator
 
