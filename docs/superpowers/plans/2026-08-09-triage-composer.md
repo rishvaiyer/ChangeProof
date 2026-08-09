@@ -4,9 +4,9 @@
 
 **Goal:** Build a transparent SRS-to-metadata mapper that produces a complex cross-domain incident query and shows every DataHub metadata use.
 
-**Architecture:** A focused `triage.py` module owns bounded rule extraction, deterministic metadata mapping, query composition, and text export. FastAPI routes render one new page and stateless POST exports; the browser reads allowed text files into the existing textarea, so uploaded files are never persisted.
+**Architecture:** A focused `triage.py` module owns bounded rule extraction, deterministic metadata mapping, query composition, and text export. A separate optional OpenAI reviewer explains and challenges only the bounded evidence after an explicit click. FastAPI routes render one new page and stateless POST exports; the browser reads allowed text files into the existing textarea, so uploaded files are never persisted.
 
-**Tech Stack:** Python 3.12, Pydantic, FastAPI, Jinja2, SQL Server SQL, pytest, existing ReportLab PDF helper, vanilla browser JavaScript.
+**Tech Stack:** Python 3.12, Pydantic, FastAPI, Jinja2, OpenAI Responses API, SQL Server SQL, pytest, existing ReportLab PDF helper, vanilla browser JavaScript.
 
 ## Global Constraints
 
@@ -57,7 +57,23 @@ def test_input_limits_are_enforced():
 - [ ] **Step 4: Run `uv run pytest tests/unit/test_triage.py -q` and confirm all tests pass.**
 - [ ] **Step 5: Commit only Task 1 files with `feat: add DataHub triage query engine`.**
 
-### Task 2: Triage Composer web experience and downloads
+### Task 2: Optional grounded AI triage review
+
+**Files:**
+- Create: `src/changeproof/triage_ai.py`
+- Create: `tests/unit/test_triage_ai.py`
+
+**Interfaces:**
+- Consumes: Task 1’s `TriageResult`.
+- Produces: `AiTriageReview` with `summary`, `explain_like_five`, `query_risks`, and `missing_questions`; `review_triage(result: TriageResult, settings: Settings | None = None, client: OpenAI | None = None) -> AiTriageReview`.
+
+- [ ] **Step 1: Write failing tests that require a configured key, verify structured output, send only extracted bounded evidence, and reject a backtick identifier absent from the mapped assets/columns/domains.**
+- [ ] **Step 2: Run `uv run pytest tests/unit/test_triage_ai.py -q` and confirm import fails because the module is absent.**
+- [ ] **Step 3: Implement a cached OpenAI Responses API structured review with `store=False`, no raw original document payload, strict instructions, and identifier grounding validation.**
+- [ ] **Step 4: Run `uv run pytest tests/unit/test_triage_ai.py -q` and confirm all tests pass.**
+- [ ] **Step 5: Commit Task 2 files with `feat: add grounded AI triage review`.**
+
+### Task 3: Triage Composer web experience and downloads
 
 **Files:**
 - Modify: `src/changeproof/app.py`
@@ -67,8 +83,8 @@ def test_input_limits_are_enforced():
 - Modify: `tests/integration/test_enterprise_web.py`
 
 **Interfaces:**
-- Consumes: Task 1’s `build_triage_result`, `triage_export_text`, sample constants, and `TriageResult` fields.
-- Produces: GET `/triage`, POST `/triage`, and POST `/triage/export/{format}` where format is `sql`, `txt`, or `pdf`.
+- Consumes: Task 1’s `build_triage_result`, `triage_export_text`, sample constants, and `TriageResult` fields plus Task 2’s `review_triage`.
+- Produces: GET `/triage`, POST `/triage`, POST `/triage/ai-review`, and POST `/triage/export/{format}` where format is `sql`, `txt`, or `pdf`.
 
 - [ ] **Step 1: Add failing integration tests**
 
@@ -96,11 +112,12 @@ def test_triage_exports(format, content_type):
 - [ ] **Step 2: Run the three new tests and confirm they fail because `/triage` does not exist.**
 - [ ] **Step 3: Register the template and routes, reuse `pdf_bytes`, validate export format before running generation, and keep all processing stateless.**
 - [ ] **Step 4: Build the accessible page with local file reading, example loading, mapping table, domain summary, DataHub touchpoint cards, readable SQL, warnings, and SQL/TXT/PDF submit buttons.**
-- [ ] **Step 5: Add responsive orange/blue/white styles with body and code text no smaller than 13px in primary result areas.**
-- [ ] **Step 6: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
-- [ ] **Step 7: Commit Task 2 files with `feat: add SRS triage composer experience`.**
+- [ ] **Step 5: Add an explicit AI review button only when the key is available; state that extracted rule mappings are sent to OpenAI and render the review as advisory without changing deterministic evidence.**
+- [ ] **Step 6: Add responsive orange/blue/white styles with body and code text no smaller than 13px in primary result areas.**
+- [ ] **Step 7: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
+- [ ] **Step 8: Commit Task 3 files with `feat: add SRS triage composer experience`.**
 
-### Task 3: Judge narrative and full verification
+### Task 4: Judge narrative and full verification
 
 **Files:**
 - Modify: `README.md`
@@ -108,12 +125,11 @@ def test_triage_exports(format, content_type):
 - Modify: `docs/judging-positioning.md`
 
 **Interfaces:**
-- Consumes: the verified routes and truthful hosted/local boundary from Tasks 1–2.
+- Consumes: the verified routes and truthful hosted/local boundary from Tasks 1–3.
 - Produces: a concise judge flow explaining repeated DataHub use and the complex query output.
 
 - [ ] **Step 1: Update the README feature list and judge demo path with `/triage` first, preserving the synthetic-hosted versus real-local boundary.**
 - [ ] **Step 2: Add a 45–60 second Triage Composer segment to the video script: upload SRS, show six domains, show repeated DataHub touchpoints, reveal generated SQL, download evidence.**
 - [ ] **Step 3: Update judging positioning with the sentence: “DataHub supplies the enterprise context; ChangeProof composes the investigation and proves where every input came from.”**
 - [ ] **Step 4: Run `uv run ruff check .` and `uv run pytest -q`; resolve any failures.**
-- [ ] **Step 5: Commit Task 3 files with `docs: add triage composer judge story`.**
-
+- [ ] **Step 5: Commit Task 4 files with `docs: add triage composer judge story`.**

@@ -22,12 +22,14 @@ AsterVale Living operates a national retail business. Its AR balance can be affe
 6. ChangeProof generates a multi-CTE chronological SQL investigation plus separate validation SQL.
 7. A numbered “How DataHub helped” trail identifies repeated metadata operations and the exact query decision each operation supported.
 8. The user downloads SQL directly or exports the complete package as TXT or PDF.
+9. When `OPENAI_API_KEY` is configured, the user may explicitly request a second-pass AI review that explains the query simply, challenges missing requirements, and lists unresolved query risks.
 
 ## DataHub boundary
 
 - DataHub supplies metadata context: search/discovery, schema fields, lineage, ownership, domains, glossary terms, tags, and quality/freshness signals.
 - ChangeProof performs the requirements mapping and SQL composition.
 - ChangeProof does not execute the generated SQL and does not claim semantic correctness without human review and database validation.
+- OpenAI receives only the extracted rule and bounded mapping package after an explicit click. It cannot add assets, change deterministic mappings, or execute SQL.
 - Railway uses clearly labelled bundled synthetic DataHub-shaped metadata.
 - The existing opt-in local DataHub mode remains the path for real MCP schema and lineage calls. Metadata categories not exposed by the pinned MCP server can use DataHub APIs in a later production integration.
 
@@ -44,6 +46,7 @@ The sample query uses SQL Server syntax and includes independently readable CTEs
 - Show unmapped rules and warnings instead of inventing assets.
 - Label all SQL as generated and review-required.
 - Label hosted evidence as synthetic demo metadata.
+- Validate backtick-delimited identifiers in AI output against the deterministic mapping package and reject unsupported identifiers.
 
 ## UX
 
@@ -62,4 +65,3 @@ The sample query uses SQL Server syntax and includes independently readable CTEs
 - Unmatched requirements are visibly flagged.
 - SQL and complete evidence exports work as SQL, TXT, and PDF.
 - Existing tests and navigation remain green.
-
