@@ -81,6 +81,8 @@ The story is intentionally simple: **a type change is not a SQL edit; it is a co
 
 Open `/triage` and either paste requirements or upload a PDF, DOCX, TXT, Markdown, SQL, or CSV file. contextIsKey extracts the text for the current response, shows a document receipt, and lets you review the extracted requirements before clicking **Interpret document with AI**.
 
+Ready-to-upload synthetic examples live in [`docs/examples/`](docs/examples/). The AsterVale accounts-receivable SRS is the primary recording flow; the other two documents show how the same context layer handles a contract migration and a regional returns investigation.
+
 The flow is deliberately bounded:
 
 ```text

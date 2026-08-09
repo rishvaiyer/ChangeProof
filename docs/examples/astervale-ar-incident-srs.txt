@@ -1,0 +1,11 @@
+# AsterVale Living accounts-receivable incident SRS
+
+Commerce orders record the customer, order total, and ordered-at timestamp.
+Invoices create the accounts-receivable amount that must be posted to finance.
+Payments and settlement records reduce the invoice balance when funds settle.
+Returns and refunds reduce the balance when merchandise is returned.
+Fulfillment shipments provide delivery timestamps for the chronological event trail.
+Customer identity links customer IDs to accounts and regional scope.
+Regional policy determines tax and credit-day rules for reconciliation.
+The incident investigation must compare all events by customer and event timestamp.
+The final reconciliation should flag negative running balances and missing joins.

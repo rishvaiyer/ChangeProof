@@ -1,0 +1,10 @@
+# AsterVale Living regional returns reconciliation SRS
+
+Returns and refunds must reconcile to the original commerce order by customer_id and order_id.
+Fulfillment delivery timestamps must be included when calculating the chronological event trail.
+Regional policy determines the applicable tax treatment and credit-day window.
+Customer identity supplies the region and accountable operations owner.
+The investigation must show which regions contain affected datasets, stored procedures, and dashboards.
+Missing regional metadata must be marked UNKNOWN rather than inferred.
+Negative running balances and missing joins must become explicit review flags.
+The output must include a reviewable query, validation checks, rollback notes, and owner-specific follow-up.
