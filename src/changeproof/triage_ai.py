@@ -45,8 +45,9 @@ def review_triage(
                 "bounded extracted rules and mapped synthetic evidence. Explain the "
                 "triage plainly, identify query risks, and ask only useful missing "
                 "questions. Do not invent assets, columns, domains, dependencies, "
-                "owners, or execution results. Put every asset, column, and domain "
-                "identifier inside backticks so grounding can be validated."
+                "owners, or execution results. Put only data asset, column, and domain "
+                "identifiers inside backticks so grounding can be validated; never put "
+                "numbers, step labels, statuses, or ordinary prose in backticks."
             ),
             input=payload_json,
             text_format=AiTriageReview,
@@ -132,7 +133,11 @@ def _validate_grounding(review: AiTriageReview, result: TriageResult) -> None:
         [review.summary, review.explain_like_five, *review.query_risks, *review.missing_questions]
     )
     identifiers = _backtick_identifiers(text)
-    unsupported = sorted(set(identifiers) - allowed)
+    unsupported = sorted(
+        identifier
+        for identifier in set(identifiers) - allowed
+        if not identifier.isdecimal()
+    )
     if unsupported:
         raise TriageAiUnavailable(
             f"OpenAI referenced an unsupported identifier: {unsupported[0]}. "

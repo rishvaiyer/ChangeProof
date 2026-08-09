@@ -75,6 +75,20 @@ class MalformedBacktickOpenAI:
     responses = MalformedBacktickResponses()
 
 
+class NumericReferenceResponses:
+    def parse(self, **kwargs):
+        return SimpleNamespace(
+            output_parsed=AiTriageReview(
+                summary="Lookup `1` maps to `finance.ar_transactions`.",
+                explain_like_five="We checked one numbered clue.",
+            )
+        )
+
+
+class NumericReferenceOpenAI:
+    responses = NumericReferenceResponses()
+
+
 def _result():
     return build_triage_result(SAMPLE_INCIDENT_QUESTION, SAMPLE_SRS_TEXT)
 
@@ -113,6 +127,16 @@ def test_review_rejects_an_identifier_absent_from_mapped_assets_columns_or_domai
             settings=Settings(openai_api_key="configured", CHANGE_PROOF_MODEL="grounding-test"),
             client=UngroundedOpenAI(),
         )
+
+
+def test_review_allows_a_backticked_numeric_step_reference():
+    review = review_triage(
+        _result(),
+        settings=Settings(openai_api_key="configured", CHANGE_PROOF_MODEL="numeric-test"),
+        client=NumericReferenceOpenAI(),
+    )
+
+    assert "`1`" in review.summary
 
 
 def test_review_rejects_an_unclosed_unsupported_identifier():
