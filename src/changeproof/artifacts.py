@@ -57,7 +57,7 @@ def build_artifacts(analysis: DemoAnalysis) -> ArtifactBundle:
 
 def _proposed_fixes(analysis: DemoAnalysis) -> str:
     sections = [
-        "-- ChangeProof generated review draft",
+        "-- contextIsKey generated review draft",
         "-- No statement in this file has been executed.",
     ]
     for item in analysis.sql_dependencies:
@@ -141,7 +141,7 @@ def _sarif(analysis: DemoAnalysis) -> dict[str, object]:
         "version": "2.1.0",
         "runs": [
             {
-                "tool": {"driver": {"name": "ChangeProof", "version": "0.1.0"}},
+                "tool": {"driver": {"name": "contextIsKey", "version": "0.1.0"}},
                 "results": results,
             }
         ],

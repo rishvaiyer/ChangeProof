@@ -53,14 +53,14 @@ def build_proposals(analysis: DemoAnalysis) -> list[ChangeProposal]:
             target_name=source_name,
             title=f"Proposed schema change: {column} {old_type} to {new_type}",
             body=(
-                f"ChangeProof analyzed a proposed change to {source_name}.{column} "
+                f"contextIsKey analyzed a proposed change to {source_name}.{column} "
                 f"({old_type} to {new_type}).\n\n"
                 f"Confidence: {analysis.impact.confidence.value}\n"
                 f"Strategy: {analysis.plan.strategy}\n\n"
                 f"Observed downstream impact:\n{blast_radius}\n\n"
                 f"{enterprise_evidence}"
                 f"{analysis.plan.summary}\n\n"
-                "Raised by ChangeProof on human approval. Lineage is evidence of "
+                "Raised by contextIsKey on human approval. Lineage is evidence of "
                 "observed dependencies, not proof of every consumer."
             ),
             rationale=(

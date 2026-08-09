@@ -132,7 +132,7 @@ def test_triage_text_export_uses_contextiskey_branding_and_project_lineage():
     export = triage_export_text(result)
 
     assert export.startswith("contextIsKey TRIAGE COMPOSER")
-    assert "Built on ChangeProof" in export
+    assert "DataHub context layer" in export
 
 
 def test_more_than_twenty_rules_is_rejected():

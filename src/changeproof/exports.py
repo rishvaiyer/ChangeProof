@@ -60,7 +60,7 @@ def artifact_text(analysis: DemoAnalysis, artifact_name: str) -> str:
 
 def all_results_text(analysis: DemoAnalysis) -> str:
     sections = [
-        "ChangeProof complete result bundle",
+        "contextIsKey complete result bundle",
         f"Company: {analysis.company_name}",
         f"Evidence: {analysis.evidence_source}",
         "Change: "
@@ -90,11 +90,11 @@ def pdf_bytes(title: str, content: str) -> bytes:
         topMargin=0.58 * inch,
         bottomMargin=0.58 * inch,
         title=title,
-        author="ChangeProof",
+        author="contextIsKey",
     )
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
-        "ChangeProofTitle",
+        "contextIsKeyTitle",
         parent=styles["Title"],
         fontName="Helvetica-Bold",
         fontSize=18,
@@ -104,7 +104,7 @@ def pdf_bytes(title: str, content: str) -> bytes:
         spaceAfter=8,
     )
     body_style = ParagraphStyle(
-        "ChangeProofBody",
+        "contextIsKeyBody",
         parent=styles["BodyText"],
         fontName="Courier",
         fontSize=9,

@@ -8,6 +8,7 @@ Target length: 2 minutes 55 seconds. Do one confident take and stay under 3 minu
 - Use a 1280 by 800 browser window at 100 percent zoom.
 - Open `/triage`, `/impact`, `/regions`, `/fixes`, and `/datahub` in advance.
 - Confirm the AI review button is visible and hosted write-back says `SIMULATED`.
+- Keep the bundled `src/changeproof/static/astervale-ar-incident-srs.txt` ready to upload.
 
 ## 0:00 to 0:15 — the problem
 
@@ -15,11 +16,11 @@ Target length: 2 minutes 55 seconds. Do one confident take and stay under 3 minu
 
 > Enterprise incidents cross teams, tables, documents, and business definitions. AI can write SQL, but without governed context it can confidently use the wrong assets. DataHub provides that context. contextIsKey turns it into an investigation with receipts.
 
-## 0:15 to 0:55 — SRS to context to query
+## 0:15 to 0:55 — SRS document to context to query
 
-**Screen:** Scroll from the included AsterVale SRS through coverage, context graph metrics, and numbered lookups.
+**Screen:** Upload the included AsterVale SRS, then scroll through the document receipt, coverage, context graph metrics, and numbered lookups.
 
-> This fictional national retailer has an accounts-receivable discrepancy spanning Commerce, Finance, Payments, Returns, Fulfillment, Identity, and Regional Policy. contextIsKey maps each requirement to bundled DataHub-shaped datasets, columns, owners, domains, and glossary terms. Seven bounded hosted lookups directly constrain the query. One unsupported rule stays unmapped instead of being invented. Live mode swaps in MCP schema and lineage reads.
+> This fictional national retailer has an accounts-receivable discrepancy spanning Commerce, Finance, Payments, Returns, Fulfillment, Identity, and Regional Policy. contextIsKey extracts the uploaded SRS, maps each requirement to bundled DataHub-shaped datasets, columns, owners, domains, and glossary terms, and shows exactly which context lookups constrained the query. One unsupported rule stays unmapped instead of being invented. Live mode swaps in MCP search, schema, entity, lineage, and query-history reads.
 
 **Screen:** Show the SQL event CTEs and downloads.
 
@@ -41,7 +42,7 @@ Target length: 2 minutes 55 seconds. Do one confident take and stay under 3 minu
 
 **Screen:** Fix Studio artifacts, side-by-side SQL, then click AI review once.
 
-> Fix Studio produces proposed SQL, validation, rollback, JSON, and SARIF. The optional OpenAI review runs only on click, receives bounded extracted evidence, and cannot change deterministic mappings, scores, execution, or write-back.
+> Fix Studio produces proposed SQL, validation, rollback, JSON, and SARIF. The optional OpenAI document interpretation runs only on click, receives extracted text—not the original binary—and cannot change DataHub grounding, deterministic mappings, scores, execution, or write-back.
 
 ## 2:15 to 2:35 — safe rollout
 

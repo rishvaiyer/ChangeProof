@@ -29,7 +29,7 @@ def test_dashboard_labels_demo_evidence() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "ChangeProof" in response.text
+    assert "contextIsKey" in response.text
     assert "Bundled AsterVale Living DataHub metadata" in response.text
     assert 'href="/static/styles.css"' in response.text
 

@@ -66,7 +66,7 @@ def provider_from_env() -> AnalysisProvider:
 
 
 def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
-    application = FastAPI(title="ChangeProof", docs_url=None, redoc_url=None)
+    application = FastAPI(title="contextIsKey", docs_url=None, redoc_url=None)
     signing_key = secrets.token_bytes(32)
     ai_last_request: dict[str, float] = {}
     application.mount(
@@ -433,7 +433,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         filename = f"contextIsKey-triage.{export_format}"
         if export_format == "pdf":
             return Response(
-                content=pdf_bytes("contextIsKey Triage Composer · Built on ChangeProof", content),
+                content=pdf_bytes("contextIsKey Triage Composer · DataHub context layer", content),
                 media_type="application/pdf",
                 headers={"Content-Disposition": f'attachment; filename="{filename}"'},
             )
@@ -485,7 +485,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         filename = f"{artifact_name.rsplit('.', 1)[0]}.{export_format}"
         if export_format == "pdf":
             return Response(
-                content=pdf_bytes("ChangeProof - " + artifact_name.replace("-", " "), content),
+                content=pdf_bytes("contextIsKey - " + artifact_name.replace("-", " "), content),
                 media_type="application/pdf",
                 headers={"Content-Disposition": f'attachment; filename="{filename}"'},
             )

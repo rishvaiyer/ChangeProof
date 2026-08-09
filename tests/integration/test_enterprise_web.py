@@ -42,7 +42,7 @@ def test_triage_page_shows_sample_mapping_complex_sql_and_datahub_trail() -> Non
     assert response.status_code == 200
     assert "Triage Composer" in response.text
     assert "contextIsKey" in response.text
-    assert "Built on ChangeProof" in response.text
+    assert "DataHub context layer" in response.text
     assert "How DataHub context helped" in response.text
     assert "finance.ar_transactions" in response.text
     assert "running_balance" in response.text
@@ -138,10 +138,10 @@ def test_triage_exports(format: str, content_type: str) -> None:
     )
     if format == "pdf":
         assert b"contextIsKey" in response.content
-        assert b"Built on ChangeProof" in response.content
+        assert b"DataHub context layer" in response.content
     else:
         assert "contextIsKey" in response.text
-        assert "Built on ChangeProof" in response.text
+        assert "DataHub context layer" in response.text
 
 
 def test_triage_without_mappings_hides_evidence_controls() -> None:
@@ -252,7 +252,7 @@ def test_all_results_bundle_can_be_exported_as_text_or_pdf() -> None:
     pdf_response = client.get("/exports/all-results.pdf")
 
     assert text_response.status_code == 200
-    assert "ChangeProof complete result bundle" in text_response.text
+    assert "contextIsKey complete result bundle" in text_response.text
     assert "usp_reconcile_loyalty_customer" in text_response.text
     assert pdf_response.status_code == 200
     assert pdf_response.content.startswith(b"%PDF")

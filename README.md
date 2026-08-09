@@ -2,7 +2,7 @@
 
 **DataHub supplies the enterprise context. contextIsKey turns it into a reviewable investigation.**
 
-contextIsKey maps incident requirements to DataHub assets and columns, composes a cross-domain chronological SQL investigation, traces proposed schema changes through hidden SQL and geographic exposure, and packages fixes behind human review. It is built on the ChangeProof decision engine.
+contextIsKey maps incident requirements to DataHub assets and columns, composes a cross-domain chronological SQL investigation, traces proposed schema changes through hidden SQL and geographic exposure, and packages fixes behind human review.
 
 [Existing public deployment](https://changeproof-production.up.railway.app/) · [Repository](https://github.com/rishvaiyer/ChangeProof) · [Apache-2.0 license](LICENSE)
 
@@ -28,6 +28,18 @@ Start with the included accounts-receivable incident, then visit seven focused w
 6. **Rollout:** follow a dependency-ordered migration with explicit gates.
 7. **DataHub actions:** approve individual incident, tag, and documentation drafts.
 
+### Upload any SRS or incident document
+
+Open `/triage` and either paste requirements or upload a PDF, DOCX, TXT, Markdown, SQL, or CSV file. contextIsKey extracts the text for the current response, shows a document receipt, and lets you review the extracted requirements before clicking **Interpret document with AI**.
+
+The flow is deliberately bounded:
+
+```text
+Document -> extracted rules -> DataHub search/schema/lineage context -> chronological SQL
+```
+
+The original binary is discarded after extraction. OpenAI receives extracted text only after the explicit AI action. AI can organize rules and explain the result; it cannot invent a DataHub asset, column, owner, lineage edge, or execution result.
+
 ## Enterprise scenario
 
 AsterVale Living is a fictional national home-furnishings retailer with 420 stores and six regional distribution centers. All company, customer, procedure, and regional data is synthetic.
@@ -50,7 +62,7 @@ stg_orders.customer_id
   -> executive_revenue_dashboard [critical]
 ```
 
-ChangeProof also searches SQL Server module definitions and finds four code-level consumers, including `CONVERT`, `CAST`, join logic, and dynamic SQL. Recognized convert and cast expressions receive reviewable drafts. Joins and dynamic SQL are marked for manual review unless a semantic rewrite can be verified.
+contextIsKey also searches SQL Server module definitions and finds four code-level consumers, including `CONVERT`, `CAST`, join logic, and dynamic SQL. Recognized convert and cast expressions receive reviewable drafts. Joins and dynamic SQL are marked for manual review unless a semantic rewrite can be verified.
 
 ## What DataHub contributes
 
@@ -65,7 +77,7 @@ DataHub is the governed context graph, not a normal application database. contex
 - Metadata completeness and freshness
 - Business grouping that can be represented with domains
 - Regional context that can be represented with structured properties
-- Official MCP tool contracts for schema and lineage reads
+- Official MCP tool contracts for search, entities, schema, lineage, and query-history reads
 - GraphQL write-back for incidents, tags, and documentation
 
 contextIsKey adds the incident and change decision layer:
@@ -101,7 +113,7 @@ Core design boundaries:
 - Hosted mode executes no database SQL.
 - Hosted Triage Composer context is bundled and synthetic; it reproduces the shape of the live integration without claiming a live cloud connection.
 - Generated SQL never executes automatically.
-- AI runs only after the user clicks **Run AI review**.
+- AI runs only after the user clicks **Interpret document with AI** or **Run advisory AI review**.
 - AI is advisory only. It cannot change risk scores, deterministic evidence, execution, or write-back.
 - Backtick-delimited identifiers are checked against the evidence bundle, but free-form AI prose is never treated as authoritative discovery.
 - Approval requests carry proposal IDs only. Catalog content is rebuilt server-side.
@@ -139,6 +151,18 @@ The key alone makes no API request. A request occurs only after an explicit clic
 
 ## Live DataHub path
 
+### Railway / DataHub Cloud
+
+For a DataHub Cloud trial or an existing tenant, add these variables to the Railway service:
+
+```text
+DATAHUB_MCP_URL=https://YOUR_TENANT.acryl.io/integrations/ai/mcp/
+DATAHUB_MCP_TOKEN=<DataHub personal access token>
+CHANGE_PROOF_TRIAGE_DATAHUB=1
+```
+
+The token belongs in Railway Variables only. With this flag enabled, the Triage Composer uses the DataHub MCP server for search, schema fields, entities, lineage, and dataset query history. If a live call fails, the result falls back to bundled synthetic context and says so in the evidence mode label.
+
 ```bash
 make live-demo
 ```
@@ -148,6 +172,7 @@ The current live integration:
 - Builds the synthetic SonicLedger dbt and DuckDB fixture
 - Emits schemas, owners, tags, table lineage, and fine-grained column lineage
 - Reads schema and lineage through the official DataHub MCP server
+- The triage path can also read search results, entity metadata, and dataset query history through the same MCP connection
 - Uses the same deterministic impact and remediation engine
 - Applies approved write-back proposals through DataHub GraphQL
 
@@ -177,6 +202,8 @@ CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context
 ## Current boundaries
 
 - Hosted evidence is deterministic and synthetic, not a live DataHub Cloud connection.
+- Uploaded document extraction is ephemeral; document files are not persisted.
+- Live triage context requires `CHANGE_PROOF_TRIAGE_DATAHUB=1` plus `DATAHUB_MCP_URL` and `DATAHUB_MCP_TOKEN`.
 - Hosted write-back is simulated and clearly labeled. It makes no network call.
 - The local live path is the verified DataHub MCP and GraphQL integration.
 - Static SQL discovery cannot guarantee complete dependency coverage.
@@ -185,4 +212,4 @@ CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context
 
 ## License
 
-contextIsKey, built on ChangeProof, is available under the [Apache License 2.0](LICENSE).
+contextIsKey is available under the [Apache License 2.0](LICENSE).

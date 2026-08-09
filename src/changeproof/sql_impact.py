@@ -62,7 +62,7 @@ ASTERVALE_SQL_MODULES = (
 
 def build_discovery_query(column_name: str) -> str:
     safe_name = column_name.replace("'", "''")
-    return f"""-- Read-only ChangeProof dependency discovery for SQL Server
+    return f"""-- Read-only contextIsKey dependency discovery for SQL Server
 DECLARE @column_name sysname = N'{safe_name}';
 
 SELECT

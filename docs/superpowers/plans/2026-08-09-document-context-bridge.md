@@ -4,7 +4,7 @@
 
 **Goal:** Let Triage Composer accept common SRS/incident documents, extract their text, ground the requirements in DataHub context, and produce reviewable SQL and exports.
 
-**Architecture:** Add a format-specific text extraction module, an optional structured OpenAI interpretation step, and a DataHub MCP enrichment boundary. The existing deterministic catalog remains the hosted fallback; live MCP enrichment is enabled only when explicitly configured and is labeled in the result. The FastAPI route accepts multipart uploads and preserves the existing paste/export flow.
+**Architecture:** Add a format-specific text extraction module, an optional structured OpenAI interpretation step, and a DataHub MCP enrichment boundary. The live boundary supports DataHub Cloud Streamable HTTP through `DATAHUB_MCP_URL`/`DATAHUB_MCP_TOKEN` and the existing self-hosted stdio path. The existing deterministic catalog remains the hosted fallback; live MCP enrichment is enabled only when explicitly configured and is labeled in the result. The FastAPI route accepts multipart uploads and preserves the existing paste/export flow.
 
 **Tech Stack:** Python 3.12, FastAPI, Starlette multipart forms, pypdf, stdlib ZIP/XML DOCX extraction, OpenAI Responses API structured output, existing MCP client, Jinja2, pytest, Ruff.
 
@@ -14,7 +14,7 @@
 - Support PDF, DOCX, TXT, Markdown, SQL, and CSV; reject unsupported, empty, encrypted, unreadable, and oversized files plainly.
 - Uploaded binaries and document contents are not persisted.
 - OpenAI receives extracted text only when the user invokes the AI action; AI cannot invent metadata or execution results.
-- DataHub MCP is authoritative only for metadata returned by bounded MCP calls; otherwise label bundled synthetic context.
+- DataHub MCP is authoritative only for metadata returned by bounded `search`, `get_entities`, `list_schema_fields`, `get_lineage`, and optional `get_dataset_queries` calls; otherwise label bundled synthetic context.
 - Never execute generated SQL.
 - Do not require Docker or a local DataHub instance for the hosted demo.
 
@@ -99,6 +99,7 @@
 ### Task 3: Add live DataHub MCP triage enrichment
 
 **Files:**
+- Modify: `src/changeproof/config.py`
 - Modify: `src/changeproof/mcp_client.py`
 - Modify: `src/changeproof/triage.py`
 - Create: `src/changeproof/triage_context.py`
@@ -122,7 +123,7 @@
 
 - [ ] **Step 3: Implement bounded live enrichment**
 
-  Add an asset-context method to `DataHubMcpClient` that calls `list_schema_fields` and `get_lineage` with a maximum of three hops, normalizes fields/owners/critical tags, and returns safe metadata. Add `triage_context.py` to enrich only mapped rules when `CHANGE_PROOF_TRIAGE_DATAHUB=1`; catch MCP failures and return the original deterministic result with an explicit fallback mode.
+  Add an asset-context method to `DataHubMcpClient` that calls `list_schema_fields` and `get_lineage` with a maximum of three hops, optionally reads `search`, `get_entities`, and `get_dataset_queries` when those tools are available, normalizes fields/owners/critical tags, and returns safe metadata. Support DataHub Cloud Streamable HTTP with `DATAHUB_MCP_URL` and `DATAHUB_MCP_TOKEN` while retaining the self-hosted stdio path. Add `triage_context.py` to enrich only mapped rules when `CHANGE_PROOF_TRIAGE_DATAHUB=1`; catch MCP failures and return the original deterministic result with an explicit fallback mode.
 
 - [ ] **Step 4: Run focused MCP tests**
 
@@ -189,7 +190,7 @@
 
 - [ ] **Step 1: Add truthful README/demo instructions**
 
-  Document the `/triage` upload flow, supported formats, DataHub MCP activation variable, bundled fallback label, and the exact AI privacy boundary. Do not claim Railway is live-connected to DataHub unless the deployment has been independently verified.
+  Document the `/triage` upload flow, supported formats, `DATAHUB_MCP_URL`, `DATAHUB_MCP_TOKEN`, and `CHANGE_PROOF_TRIAGE_DATAHUB` activation variables, bundled fallback label, and the exact AI privacy boundary. Do not claim Railway is live-connected to DataHub unless the deployment has been independently verified.
 
 - [ ] **Step 2: Run the full verification suite**
 
@@ -204,4 +205,3 @@
 - [ ] **Step 4: Commit documentation and handoff**
 
   Run: `git add README.md docs/demo-video-script.md && git commit -m "docs: explain document context demo"`
-
