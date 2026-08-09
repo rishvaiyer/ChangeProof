@@ -1,12 +1,12 @@
-# ChangeProof
+# contextIsKey
 
-**Know what breaks before you ship a data contract change.**
+**DataHub supplies the enterprise context. contextIsKey turns it into a reviewable investigation.**
 
-ChangeProof turns DataHub metadata into an enterprise migration decision. It traces a proposed schema edit, discovers hidden SQL consumers, maps regional exposure, generates reviewable fixes, and drafts the decision back into DataHub behind human approval.
+contextIsKey maps incident requirements to DataHub assets and columns, composes a cross-domain chronological SQL investigation, traces proposed schema changes through hidden SQL and geographic exposure, and packages fixes behind human review. It is built on the ChangeProof decision engine.
 
 [Existing public deployment](https://changeproof-production.up.railway.app/) · [Repository](https://github.com/rishvaiyer/ChangeProof) · [Apache-2.0 license](LICENSE)
 
-> The AsterVale Enterprise Impact Center is implemented on the feature branch and must be deployed before the public URL reflects this README. Hosted mode uses deterministic synthetic metadata. The repository also includes an opt-in integration verified against a local DataHub instance.
+> The public Railway demo uses deterministic synthetic DataHub-shaped context for speed and reliability. The repository also includes an opt-in integration verified against a local DataHub instance through the official MCP server.
 
 ## Judge flow
 
@@ -18,18 +18,21 @@ Current type: varchar
 Proposed type: bigint
 ```
 
-Then visit six focused workspaces:
+Start with the included accounts-receivable incident, then visit seven focused workspaces:
 
-1. **Analyze:** frame the proposed contract change and see the enterprise summary.
-2. **Impact graph:** combine DataHub lineage with hidden SQL Server module findings.
-3. **Regions:** map affected assets, stored procedures, owners, and review flags across Northeast, South, Midwest, West, and unknown metadata.
-4. **Fix Studio:** review generated SQL, validation queries, rollback controls, JSON, and SARIF artifacts.
-5. **Rollout:** follow a dependency-ordered migration with explicit gates.
-6. **DataHub actions:** approve individual incident, tag, and documentation drafts.
+1. **Triage Composer:** map an SRS to datasets, columns, owners, domains, glossary terms, and a reviewable chronological SQL query.
+2. **Analyze:** frame a proposed contract change and see the enterprise summary.
+3. **Impact graph:** combine DataHub lineage with hidden SQL Server module findings.
+4. **Regions:** map assets, stored procedures, owners, and review flags across Northeast, South, Midwest, West, and unknown metadata.
+5. **Fix Studio:** review generated SQL, validation queries, rollback controls, JSON, and SARIF artifacts.
+6. **Rollout:** follow a dependency-ordered migration with explicit gates.
+7. **DataHub actions:** approve individual incident, tag, and documentation drafts.
 
 ## Enterprise scenario
 
 AsterVale Living is a fictional national home-furnishings retailer with 420 stores and six regional distribution centers. All company, customer, procedure, and regional data is synthetic.
+
+The Triage Composer begins with a cross-functional AR discrepancy. Nine SRS rules span Commerce, Finance, Payments, Returns, Fulfillment, Customer Identity, and Regional Policy. Seven bounded lookups against the hosted synthetic context select 7 datasets, 34 schema fields, 7 owners, 7 domains, and 7 glossary terms before composing the query. One unsupported rule stays visibly unmapped instead of being invented.
 
 The proposed edit is:
 
@@ -51,11 +54,13 @@ ChangeProof also searches SQL Server module definitions and finds four code-leve
 
 ## What DataHub contributes
 
-DataHub is the operational evidence graph, not a normal application database:
+DataHub is the governed context graph, not a normal application database. contextIsKey uses its relationships as reasoning inputs:
 
+- Dataset discovery across functional domains
 - Column-level lineage and hop distance
 - Dataset and schema-field identity
 - Ownership metadata
+- Business glossary terms and domains
 - Critical-asset tags
 - Metadata completeness and freshness
 - Business grouping that can be represented with domains
@@ -63,8 +68,11 @@ DataHub is the operational evidence graph, not a normal application database:
 - Official MCP tool contracts for schema and lineage reads
 - GraphQL write-back for incidents, tags, and documentation
 
-ChangeProof adds the decision layer for a change that has not happened yet:
+contextIsKey adds the incident and change decision layer:
 
+- SRS-to-metadata rule mapping with explicit unmapped results
+- Cross-domain chronological query composition
+- A numbered record of every hosted context lookup and query decision
 - Change-specific evidence scoring
 - Hidden SQL dependency discovery
 - Geographic blast-radius aggregation
@@ -77,19 +85,21 @@ ChangeProof adds the decision layer for a change that has not happened yet:
 
 ```mermaid
 flowchart LR
-    A["Proposed schema change"] --> B["DataHub MCP evidence"]
-    A --> C["Read-only SQL module scan"]
-    B --> D["Deterministic impact engine"]
-    C --> D
-    D --> E["Regional exposure"]
-    D --> F["Fix and rollout artifacts"]
-    F --> G["Optional OpenAI review"]
-    D --> H["Approval-gated DataHub GraphQL write-back"]
+    A["SRS or proposed schema change"] --> B["DataHub context graph via MCP"]
+    B --> C["Bounded rule-to-asset mapping"]
+    C --> D["Chronological SQL composer"]
+    A --> E["Read-only SQL module scan"]
+    B --> F["Deterministic impact engine"]
+    E --> F
+    F --> G["Regional exposure, fixes, rollout"]
+    D --> H["Optional grounded AI review"]
+    G --> I["Approval-gated DataHub write-back"]
 ```
 
 Core design boundaries:
 
 - Hosted mode executes no database SQL.
+- Hosted Triage Composer context is bundled and synthetic; it reproduces the shape of the live integration without claiming a live cloud connection.
 - Generated SQL never executes automatically.
 - AI runs only after the user clicks **Run AI review**.
 - AI is advisory only. It cannot change risk scores, deterministic evidence, execution, or write-back.
@@ -99,7 +109,7 @@ Core design boundaries:
 
 ## Generated artifacts
 
-The Fix Studio downloads six deterministic outputs:
+Every result can be downloaded as TXT or PDF. The Triage Composer also downloads its query as SQL. The Fix Studio exposes six deterministic artifacts:
 
 - `impact-report.json`
 - `discovery-query.sql`
@@ -158,9 +168,14 @@ The ordinary suite is credential-free. Live DataHub remains opt-in:
 CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context.py -q
 ```
 
+## Context capability boundary
+
+- **Used in the hosted flow:** datasets, columns, owners, domains, glossary terms, deterministic discovery, query composition, regional context, and reviewable exports.
+- **Available through the included live path:** official MCP schema and lineage reads plus approval-gated GraphQL write-back.
+- **Connect live DataHub to activate:** live quality and freshness signals, documentation relationships, dashboards and ML models, near-real-time metadata events, audit access, and governance policies.
+
 ## Current boundaries
 
-- The existing public deployment must be updated before it shows AsterVale.
 - Hosted evidence is deterministic and synthetic, not a live DataHub Cloud connection.
 - Hosted write-back is simulated and clearly labeled. It makes no network call.
 - The local live path is the verified DataHub MCP and GraphQL integration.
@@ -170,4 +185,4 @@ CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context
 
 ## License
 
-ChangeProof is available under the [Apache License 2.0](LICENSE).
+contextIsKey, built on ChangeProof, is available under the [Apache License 2.0](LICENSE).

@@ -117,9 +117,9 @@ def test_triage_exports(format, content_type):
 - [ ] **Step 6: Add a compact Relevance / Reliability / Retention explainer. Label Retention as handoff-ready through downloads and approval-gated write-back, not persistent cross-incident memory.**
 - [ ] **Step 7: Visualize computed result data with a context coverage ring, cross-domain query flow, DataHub evidence timeline, and domain coverage cards; do not add invented metrics.**
 - [ ] **Step 8: Add responsive orange/blue/white styles with body and code text no smaller than 13px in primary result areas.**
-- [ ] **Step 9: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
-- [ ] **Step 10: Apply `contextIsKey` primary branding and `Built on ChangeProof` secondary credit across the owned UI, browser metadata, and triage export titles without changing infrastructure or internal package names.**
-- [ ] **Step 11: Commit Task 3 files with `feat: add SRS triage composer experience`.**
+- [x] **Step 9: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
+- [x] **Step 10: Apply `contextIsKey` primary branding and `Built on ChangeProof` secondary credit across the owned UI, browser metadata, and triage export titles without changing infrastructure or internal package names.**
+- [x] **Step 11: Commit Task 3 files with `feat: add SRS triage composer experience`.**
 
 ### Task 4: Judge narrative and full verification
 
@@ -132,10 +132,10 @@ def test_triage_exports(format, content_type):
 - Consumes: the verified routes and truthful hosted/local boundary from Tasks 1–3.
 - Produces: a concise judge flow explaining repeated DataHub use and the complex query output.
 
-- [ ] **Step 1: Update README and judge-facing docs to use `contextIsKey` as the project name and `Built on ChangeProof` as foundation credit; keep URLs and internal commands unchanged.**
-- [ ] **Step 2: Update the README feature list and judge demo path with `/triage` first, preserving the synthetic-hosted versus real-local boundary.**
-- [ ] **Step 3: Add a 45–60 second Triage Composer segment to the video script: upload SRS, show six domains, show repeated DataHub touchpoints, reveal generated SQL, download evidence.**
-- [ ] **Step 4: Update judging positioning with the sentence: “DataHub supplies the enterprise context; contextIsKey composes the investigation and proves where every input came from.”**
-- [ ] **Step 5: Explain the Context Management three Rs honestly: Relevance and Reliability are implemented; Retention is handoff-ready through exports/write-back rather than persistent agent memory.**
-- [ ] **Step 6: Run `uv run ruff check .` and `uv run pytest -q`; resolve any failures.**
-- [ ] **Step 7: Commit Task 4 files with `docs: add triage composer judge story`.**
+- [x] **Step 1: Update README and judge-facing docs to use `contextIsKey` as the project name and `Built on ChangeProof` as foundation credit; keep URLs and internal commands unchanged.**
+- [x] **Step 2: Update the README feature list and judge demo path with `/triage` first, preserving the synthetic-hosted versus real-local boundary.**
+- [x] **Step 3: Add a 45–60 second Triage Composer segment to the video script: upload SRS, show six domains, show repeated DataHub touchpoints, reveal generated SQL, download evidence.**
+- [x] **Step 4: Update judging positioning with the sentence: “DataHub supplies the enterprise context; contextIsKey composes the investigation and proves where every input came from.”**
+- [x] **Step 5: Explain the Context Management three Rs honestly: Relevance and Reliability are implemented; Retention is handoff-ready through exports/write-back rather than persistent agent memory.**
+- [x] **Step 6: Run `uv run ruff check .` and `uv run pytest -q`; resolve any failures.**
+- [x] **Step 7: Commit Task 4 files with `docs: add triage composer judge story`.**

@@ -1,11 +1,11 @@
-# ChangeProof Devpost draft
+# contextIsKey Devpost draft
 
 Use only after the AsterVale branch is deployed and the public URL is reverified.
 
 ## Project
 
-- **Name:** ChangeProof
-- **Pitch:** Know what breaks before you ship a data contract change.
+- **Name:** contextIsKey
+- **Pitch:** Turn governed enterprise context into investigations you can inspect, download, and trust.
 - **Category:** Agents That Do Real Work
 - **License:** Apache-2.0
 - **Built with:** DataHub, DataHub MCP, DataHub GraphQL, Python, FastAPI, Jinja2, dbt, DuckDB, OpenAI, Railway
@@ -14,7 +14,7 @@ Use only after the AsterVale branch is deployed and the public URL is reverified
 
 A one-line type change can become a national incident. The evidence needed to prevent it is often scattered across lineage, ownership, stored procedures, regional operations, and tribal knowledge.
 
-DataHub knows what is connected today. ChangeProof asks a different question: if this contract changes tomorrow, what breaks, who is affected, and how should the team land it safely?
+DataHub supplies the context graph. contextIsKey asks: what evidence does this incident require, how do the domains connect, what query should a human review, and what changes safely land next?
 
 ## What it does
 
@@ -22,20 +22,23 @@ The demo models AsterVale Living, a fictional national retailer with 420 stores.
 
 The prepared change is `stg_orders.customer_id` from `varchar` to `bigint`.
 
-ChangeProof:
+contextIsKey, built on ChangeProof:
 
-1. Reads observed downstream lineage, ownership, critical tags, and field identity from DataHub evidence.
-2. Generates a read-only SQL Server discovery query for hidden stored procedures and views.
-3. Classifies `CONVERT`, `CAST`, join, predicate, and dynamic SQL references.
-4. Maps affected assets and SQL consumers to operating regions and owners.
-5. Produces proposed SQL, validation queries, rollback, JSON, and SARIF.
-6. Offers a bounded OpenAI review only after an explicit click.
-7. Drafts incidents, tags, and documentation for DataHub, then waits for item-level approval.
+1. Maps an uploaded or pasted SRS to DataHub datasets, columns, owners, domains, and glossary terms.
+2. Composes a reviewable chronological SQL investigation across seven functional domains.
+3. Shows every bounded hosted context lookup and the exact query choice it supported.
+4. Reads observed downstream lineage, ownership, critical tags, and field identity from DataHub evidence.
+5. Generates and classifies a read-only SQL Server discovery query for hidden procedures and views.
+6. Maps affected assets and SQL consumers to operating regions and owners.
+7. Produces proposed SQL, validation, rollback, JSON, SARIF, TXT, and PDF exports.
+8. Offers a grounded OpenAI review only after an explicit click.
+9. Drafts incidents, tags, and documentation for DataHub, then waits for item-level approval.
 
 ## Why DataHub matters
 
-ChangeProof uses DataHub as an operational graph:
+contextIsKey uses DataHub as a governed context graph:
 
+- Discovery across datasets, columns, domains, owners, and glossary terms
 - Official MCP schema and lineage reads
 - Fine-grained column lineage
 - Ownership and critical tags
@@ -43,12 +46,13 @@ ChangeProof uses DataHub as an operational graph:
 - Domain and structured-property patterns for business and geography metadata
 - GraphQL write-back for incidents, tags, and documentation
 
-Lineage is an input, not the product. The product is the migration decision and its reviewable artifacts.
+The context graph is the foundation. The product is the evidence-backed incident or migration decision and its reviewable artifacts.
 
 ## Technical execution
 
 - Deterministic impact, SQL, region, and artifact engines
-- Server-rendered six-page responsive dashboard
+- Server-rendered seven-page responsive dashboard
+- SRS mapper and mapping-derived cross-domain SQL composer
 - Six allowlisted downloadable artifacts
 - Explicit OpenAI Responses API call with structured Pydantic output
 - No AI call on page load
@@ -60,8 +64,11 @@ Lineage is an input, not the product. The product is the migration decision and 
 
 ## Originality
 
-DataHub answers what is connected now. ChangeProof simulates a proposed change and answers:
+DataHub answers what exists, how it connects, what it means, and who owns it. contextIsKey turns that context into answers:
 
+- Which requirements map to trusted assets and columns?
+- Which hosted context lookup changed each part of the query?
+- What chronological cross-domain investigation should a human review?
 - What observed assets are exposed?
 - What hidden code also references the field?
 - Which regions and owners must coordinate?
@@ -85,7 +92,7 @@ A platform engineer receives more than a risk score:
 
 The hardest part was keeping confidence honest. Lineage cannot see every dynamic query or external reader. Static SQL scanning cannot resolve every runtime string. Region metadata can be absent.
 
-ChangeProof exposes those limits. Dynamic SQL gets manual review. Missing geography becomes `UNKNOWN`. Hosted simulation never claims a real DataHub write.
+contextIsKey exposes those limits. Unsupported SRS rules stay unmapped. Dynamic SQL gets manual review. Missing geography becomes `UNKNOWN`. Hosted simulation never claims a live DataHub read or write.
 
 ## What is next
 

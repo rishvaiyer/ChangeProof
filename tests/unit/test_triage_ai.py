@@ -33,6 +33,20 @@ class FakeOpenAI:
     responses = FakeResponses()
 
 
+class CountingResponses(FakeResponses):
+    def __init__(self):
+        self.calls = 0
+
+    def parse(self, **kwargs):
+        self.calls += 1
+        return super().parse(**kwargs)
+
+
+class CountingOpenAI:
+    def __init__(self):
+        self.responses = CountingResponses()
+
+
 class UngroundedResponses:
     def parse(self, **kwargs):
         return SimpleNamespace(
@@ -80,6 +94,16 @@ def test_review_returns_structured_grounded_output_from_bounded_evidence():
     assert isinstance(result, AiTriageReview)
     assert result.summary == "The mapped AR rules point to `finance.ar_transactions`."
     assert result.query_risks == ["The `amount` column needs validation."]
+
+
+def test_review_does_not_retain_a_previous_incident_response():
+    client = CountingOpenAI()
+    settings = Settings(openai_api_key="configured", CHANGE_PROOF_MODEL="no-cache-test")
+
+    review_triage(_result(), settings=settings, client=client)
+    review_triage(_result(), settings=settings, client=client)
+
+    assert client.responses.calls == 2
 
 
 def test_review_rejects_an_identifier_absent_from_mapped_assets_columns_or_domains():

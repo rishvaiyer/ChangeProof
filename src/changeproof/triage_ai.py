@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 
@@ -9,8 +8,6 @@ from pydantic import BaseModel, Field
 
 from .config import Settings
 from .triage import TriageResult
-
-_CACHE: dict[str, AiTriageReview] = {}
 
 
 class AiTriageReview(BaseModel):
@@ -38,11 +35,6 @@ def review_triage(
 
     payload = _evidence_payload(result)
     payload_json = json.dumps(payload, sort_keys=True)
-    cache_key = hashlib.sha256(
-        f"{settings.changeproof_model}:{payload_json}".encode()
-    ).hexdigest()
-    if cache_key in _CACHE:
-        return _CACHE[cache_key]
 
     openai_client = client or OpenAI(api_key=settings.openai_api_key)
     try:
@@ -74,7 +66,6 @@ def review_triage(
             "The deterministic triage result is unchanged."
         )
     _validate_grounding(review, result)
-    _CACHE[cache_key] = review
     return review
 
 

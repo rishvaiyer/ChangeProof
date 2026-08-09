@@ -48,7 +48,7 @@
         <header class="topbar">
           <div class="breadcrumb"><span>{{ analysis.company_name if analysis else "contextIsKey" }}</span><b>/</b>{% block breadcrumb %}Change intelligence{% endblock %}</div>
           <div class="topbar-actions">
-            <span class="evidence-badge"><i></i>{{ analysis.evidence_source if analysis else "Evidence unavailable" }}</span>
+            <span class="evidence-badge"><i></i>{% if page == "triage" %}Bundled DataHub context{% else %}{{ analysis.evidence_source if analysis else "Evidence unavailable" }}{% endif %}</span>
             <a class="avatar" href="/datahub{{ nav_query }}" aria-label="Open DataHub actions">RI</a>
           </div>
         </header>

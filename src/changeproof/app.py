@@ -163,6 +163,13 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         status_code: int = 200,
     ) -> HTMLResponse:
         mapped_rules = tuple(rule for rule in result.mappings if rule.status == "MAPPED")
+        unique_assets = {rule.asset_urn for rule in mapped_rules if rule.asset_urn}
+        unique_columns = {
+            (rule.asset_urn, column)
+            for rule in mapped_rules
+            for column in rule.columns
+            if rule.asset_urn
+        }
         return templates.TemplateResponse(
             request=request,
             name=PAGE_TEMPLATES["triage"],
@@ -180,6 +187,14 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 "coverage_percent": round(100 * len(mapped_rules) / len(result.rules))
                 if result.rules
                 else 0,
+                "context_metrics": {
+                    "datasets": len(unique_assets),
+                    "columns": len(unique_columns),
+                    "owners": len({rule.owner for rule in mapped_rules if rule.owner}),
+                    "domains": len(result.domains),
+                    "terms": len({rule.glossary for rule in mapped_rules if rule.glossary}),
+                    "lookups": len(result.datahub_steps),
+                },
                 "ai_available": bool(os.getenv("OPENAI_API_KEY")),
                 "ai_review": ai_review,
                 "ai_error": ai_error,

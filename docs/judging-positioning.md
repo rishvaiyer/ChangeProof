@@ -1,12 +1,14 @@
-# ChangeProof judging position
+# contextIsKey judging position
 
 ## One sentence
 
-DataHub tells you what is connected today. ChangeProof tells you how to land a change that has not happened yet.
+DataHub supplies the enterprise context; contextIsKey composes the investigation and proves where every input came from.
 
 ## Use of DataHub
 
 - Reads schemas and bounded lineage through the official DataHub MCP server.
+- Maps SRS rules to datasets, columns, owners, domains, and glossary terms.
+- Shows every bounded hosted context lookup and the query decision it supported.
 - Uses fine-grained column identity, ownership, critical tags, freshness, and completeness as evidence.
 - Models enterprise business grouping with domains and geographic context with structured-property patterns.
 - Drafts operational incidents, pending-change tags, and migration documentation.
@@ -15,8 +17,9 @@ DataHub tells you what is connected today. ChangeProof tells you how to land a c
 
 ## Technical execution
 
-- Four focused deterministic engines: impact, SQL discovery, regions, and artifacts.
-- Six real dashboard pages with responsive desktop and mobile layouts.
+- Five focused deterministic engines: triage composition, impact, SQL discovery, regions, and artifacts.
+- Seven responsive dashboard pages.
+- Multi-CTE chronological SQL across seven enterprise domains, with non-financial timeline events excluded from AR arithmetic.
 - Static SQL classification for convert, cast, joins, predicates, and dynamic SQL.
 - JSON, SQL, rollback, validation, and SARIF downloads.
 - Structured OpenAI review behind explicit user action.
@@ -25,11 +28,12 @@ DataHub tells you what is connected today. ChangeProof tells you how to land a c
 
 ## Originality
 
-ChangeProof does not rebuild DataHub search, catalog, ingestion, or lineage traversal.
+contextIsKey does not rebuild DataHub search, catalog, ingestion, or lineage traversal.
 
 It adds capabilities tied to a hypothetical future edit:
 
 - Change-specific evidence scoring
+- Requirements-to-context mapping and cross-domain incident query composition
 - Hidden stored-procedure discovery
 - Regional blast radius and owner coordination
 - Generated migration artifacts
@@ -57,9 +61,16 @@ The output is a change-review package, not a chart:
 - Apache-2.0 license
 - Public repository and Railway deployment path
 
+## Explain it like I am five
+
+- **DataHub is the labeled map:** it knows what data things exist, how they connect, what they mean, and who looks after them.
+- **contextIsKey is the detective:** it reads the problem, asks the map for only the relevant clues, and writes a draft investigation.
+- **The numbered lookup trail is the receipt:** judges can see which bundled clue changed which part of the query; live mode uses MCP reads.
+- **The human review badge is the safety lock:** no generated query, fix, or write-back runs by itself.
+
 ## Strong demo line
 
-> The graph tells me what DataHub observed. The SQL scan tells me what the graph may miss. The regional view tells me who has to coordinate. The Fix Studio gives them something they can review and ship.
+> DataHub gives the agent a governed map of the enterprise. contextIsKey turns that map into a cross-domain investigation, shows its receipts, and keeps every action behind human review.
 
 ## Honest limits
 

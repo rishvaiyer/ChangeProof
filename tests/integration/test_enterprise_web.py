@@ -41,9 +41,17 @@ def test_triage_page_shows_sample_mapping_complex_sql_and_datahub_trail() -> Non
     assert "Triage Composer" in response.text
     assert "contextIsKey" in response.text
     assert "Built on ChangeProof" in response.text
-    assert "How DataHub helped" in response.text
+    assert "How DataHub context helped" in response.text
     assert "finance.ar_transactions" in response.text
     assert "running_balance" in response.text
+    assert "Bundled DataHub context" in response.text
+    assert "Context graph coverage" in response.text
+    assert "7</strong><small>bounded lookups" in response.text
+    assert "Bundled DataHub-shaped context" in response.text
+    assert "CONNECT TO ACTIVATE" in response.text
+    assert "The file stays local" in response.text
+    assert 'accept=".txt,.md,.sql,.csv"' in response.text
+    assert 'role="status"' in response.text
 
 
 def test_triage_accepts_requirements_and_flags_unknown_rules() -> None:
@@ -71,6 +79,12 @@ def test_triage_exports(format: str, content_type: str) -> None:
     assert response.headers["content-disposition"] == (
         f'attachment; filename="contextIsKey-triage.{format}"'
     )
+    if format == "pdf":
+        assert b"contextIsKey" in response.content
+        assert b"Built on ChangeProof" in response.content
+    else:
+        assert "contextIsKey" in response.text
+        assert "Built on ChangeProof" in response.text
 
 
 def test_triage_without_mappings_hides_evidence_controls() -> None:
@@ -95,7 +109,12 @@ def test_triage_ai_review_discloses_it_receives_extracted_mappings(monkeypatch) 
     assert "Extracted rule mappings—not the original file—are sent to OpenAI." in response.text
 
 
-def test_triage_rejects_unknown_export_format_before_generation() -> None:
+def test_triage_rejects_unknown_export_format_before_generation(monkeypatch) -> None:
+    def fail_if_generated(*args: str):
+        raise AssertionError("invalid export must not build triage evidence")
+
+    monkeypatch.setattr("changeproof.app.build_triage_result", fail_if_generated)
+
     response = client.post("/triage/export/csv", data={"question": "x", "requirements_text": "x"})
 
     assert response.status_code == 404

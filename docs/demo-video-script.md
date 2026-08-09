@@ -1,73 +1,66 @@
-# ChangeProof demo script
+# contextIsKey demo script
 
-Target length: 2 minutes 45 seconds. Keep the video under 3 minutes.
+Target length: 2 minutes 55 seconds. Do one confident take and stay under 3 minutes.
 
 ## Before recording
 
-- Deploy and verify the AsterVale branch.
+- Deploy and verify the live Railway URL.
 - Use a 1280 by 800 browser window at 100 percent zoom.
-- Close notifications and personal tabs.
-- Open the live demo, GitHub README, and optional local DataHub page.
-- Confirm Railway shows `SIMULATED` for hosted write-back.
+- Open `/triage`, `/impact`, `/regions`, `/fixes`, and `/datahub` in advance.
+- Confirm the AI review button is visible and hosted write-back says `SIMULATED`.
 
-## 0:00 to 0:20, the problem
+## 0:00 to 0:15 — the problem
 
-**Screen:** Analyze page.
+**Screen:** Triage Composer hero.
 
-> A schema change can be one line of code and still become a national incident. DataHub knows the observed lineage, owners, and critical assets. But a migration decision also needs hidden code, regional coordination, fixes, validation, and rollback. That is ChangeProof.
+> Enterprise incidents cross teams, tables, documents, and business definitions. AI can write SQL, but without governed context it can confidently use the wrong assets. DataHub provides that context. contextIsKey turns it into an investigation with receipts.
 
-## 0:20 to 0:45, the enterprise change
+## 0:15 to 0:55 — SRS to context to query
 
-**Screen:** Prepared AsterVale card and metrics.
+**Screen:** Scroll from the included AsterVale SRS through coverage, context graph metrics, and numbered lookups.
 
-> AsterVale Living is a fictional retailer with 420 stores. We are changing stg_orders.customer_id from varchar to bigint. Before shipping, ChangeProof scores the observed DataHub evidence and shows four downstream assets, four hidden SQL modules, five region groups, and two critical consumers.
+> This fictional national retailer has an accounts-receivable discrepancy spanning Commerce, Finance, Payments, Returns, Fulfillment, Identity, and Regional Policy. contextIsKey maps each requirement to bundled DataHub-shaped datasets, columns, owners, domains, and glossary terms. Seven bounded hosted lookups directly constrain the query. One unsupported rule stays unmapped instead of being invented. Live mode swaps in MCP schema and lineage reads.
 
-Click **Explore impact**.
+**Screen:** Show the SQL event CTEs and downloads.
 
-## 0:45 to 1:15, DataHub plus hidden SQL
+> The result is a chronological SQL Server investigation with orders, invoices, payments, refunds, and fulfillment events. Only financial events change the running AR balance. Every result is reviewable and downloadable as SQL, TXT, or PDF. Nothing executes.
+
+## 0:55 to 1:25 — proposed-change impact
 
 **Screen:** Impact graph, then hidden SQL table.
 
-> DataHub supplies the column lineage, ownership, critical tags, and hop distance. ChangeProof then complements that graph with a read-only SQL Server module query. It finds a convert, a cast, a join, and dynamic SQL. Verified convert and cast expressions receive draft fixes. The join and dynamic SQL stay in manual review.
+> The same context layer protects future changes. For a customer-ID type migration, DataHub supplies column lineage, ownership, critical tags, and hop distance. contextIsKey adds a read-only scan for hidden stored procedures and views, then separates safe draft rewrites from joins and dynamic SQL that need manual review.
 
-Click **Regions**.
-
-## 1:15 to 1:40, geographic coordination
+## 1:25 to 1:45 — geography
 
 **Screen:** Regional map and owner matrix.
 
-> The same technical change does not have the same operational impact everywhere. Northeast and West include critical customer-data exposure. South and Midwest are managed exposure. One dynamic module has no region metadata, so ChangeProof says unknown instead of guessing.
+> The blast radius is operational, not just technical. Northeast and West include critical exposure. South and Midwest are managed exposure. Missing region metadata stays unknown, so teams see uncertainty instead of a guess.
 
-Click **Fix Studio**.
+## 1:45 to 2:15 — fixes and grounded AI
 
-## 1:40 to 2:10, generated artifacts and AI
+**Screen:** Fix Studio artifacts, side-by-side SQL, then click AI review once.
 
-**Screen:** Artifact cards and side-by-side SQL fixes.
+> Fix Studio produces proposed SQL, validation, rollback, JSON, and SARIF. The optional OpenAI review runs only on click, receives bounded extracted evidence, and cannot change deterministic mappings, scores, execution, or write-back.
 
-> ChangeProof generates the discovery query, proposed fixes, validation SQL, rollback, a JSON report, and SARIF for CI. Nothing executes automatically. The optional AI review runs only when clicked. It is advisory, and it cannot change scores, evidence, execution, or write-back.
+## 2:15 to 2:35 — safe rollout
 
-Click **Rollout**.
+**Screen:** Rollout timeline.
 
-## 2:10 to 2:30, release plan
+> The rollout preserves the original field, migrates consumers in dependency order, validates each stage, and keeps reverse-order rollback available until owners approve cutover.
 
-**Screen:** Release readiness and timeline.
+## 2:35 to 2:55 — close the context loop
 
-> The rollout keeps the original field available, migrates consumers in dependency order, validates each stage, and preserves a reverse-order rollback until owners approve cutover.
+**Screen:** DataHub actions and context capability boundary.
 
-Click **DataHub actions**.
-
-## 2:30 to 2:45, close the loop
-
-**Screen:** Approval queue. Select one proposal, then approve.
-
-> Finally, ChangeProof drafts an incident, tags, and documentation back into DataHub. It stops for item-level approval, and the server rebuilds the content from the analysis. This public demo is simulated and says so. The repository also includes the real local MCP read and GraphQL write path.
+> Finally, contextIsKey drafts incidents, tags, and documentation back into DataHub behind item-level approval. Railway uses bundled synthetic context and simulated write-back for a reliable Docker-free demo. The repository also includes the real official-MCP schema and lineage path. DataHub is the governed map; contextIsKey is the detective that shows every clue it used.
 
 ## Do not claim
 
-- Do not say the hosted demo is connected to DataHub Cloud.
-- Do not say simulated approval wrote to a real DataHub.
-- Do not say generated SQL was executed.
-- Do not say AI discovers dependencies or assigns risk.
+- Do not say Railway is connected to DataHub Cloud.
+- Do not say simulated approval wrote to real DataHub.
+- Do not say generated SQL was executed or proven semantically correct.
+- Do not say the hosted demo has live quality, audit, governance, dashboard, or ML-model metadata.
 - Do not claim complete SQL coverage or legal compliance.
 
 ## After recording
