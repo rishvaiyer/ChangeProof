@@ -44,7 +44,7 @@ Click **Fix Studio**.
 
 **Screen:** Artifact cards and side-by-side SQL fixes.
 
-> ChangeProof generates the discovery query, proposed fixes, validation SQL, rollback, a JSON report, and SARIF for CI. Nothing executes automatically. The optional AI review runs only when clicked and can explain this deterministic evidence, but it cannot change scores or invent dependencies.
+> ChangeProof generates the discovery query, proposed fixes, validation SQL, rollback, a JSON report, and SARIF for CI. Nothing executes automatically. The optional AI review runs only when clicked. It is advisory, and it cannot change scores, evidence, execution, or write-back.
 
 Click **Rollout**.
 

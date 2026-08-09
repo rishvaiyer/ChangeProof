@@ -92,7 +92,8 @@ Core design boundaries:
 - Hosted mode executes no database SQL.
 - Generated SQL never executes automatically.
 - AI runs only after the user clicks **Run AI review**.
-- AI cannot change risk scores, invent dependencies, or control write-back.
+- AI is advisory only. It cannot change risk scores, deterministic evidence, execution, or write-back.
+- Backtick-delimited identifiers are checked against the evidence bundle, but free-form AI prose is never treated as authoritative discovery.
 - Approval requests carry proposal IDs only. Catalog content is rebuilt server-side.
 - Missing lineage, ownership, or region metadata stays visible as uncertainty.
 

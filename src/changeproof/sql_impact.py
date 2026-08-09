@@ -123,23 +123,31 @@ def _classify(module: SqlModule, column_name: str, new_type: str) -> SqlDependen
         )
     elif re.search(r"\b(?:TRY_)?CONVERT\s*\(", upper):
         kind = SqlMatchKind.CONVERT
-        confidence = Confidence.HIGH
         expression = re.compile(
-            rf"(?:TRY_)?CONVERT\s*\(\s*[^,]+\s*,\s*{re.escape(column_name)}\s*\)",
+            rf"(?:TRY_)?CONVERT\s*\(\s*[^,]+\s*,\s*"
+            rf"((?:[A-Za-z_][A-Za-z0-9_]*\.)?{re.escape(column_name)})\s*\)",
             re.IGNORECASE,
         )
-        proposed_sql = expression.sub(
-            f"TRY_CONVERT({new_type.upper()}, {column_name})", definition
+        proposed_sql, count = expression.subn(
+            lambda match: f"TRY_CONVERT({new_type.upper()}, {match.group(1)})",
+            definition,
+        )
+        proposed_sql, confidence, manual_review_reason = _verify_rewrite(
+            proposed_sql, count
         )
     elif re.search(r"\bCAST\s*\(", upper):
         kind = SqlMatchKind.CAST
-        confidence = Confidence.HIGH
         expression = re.compile(
-            rf"CAST\s*\(\s*{re.escape(column_name)}\s+AS\s+[^)]+\)",
+            rf"CAST\s*\(\s*((?:[A-Za-z_][A-Za-z0-9_]*\.)?"
+            rf"{re.escape(column_name)})\s+AS\s+[^)]+\)",
             re.IGNORECASE,
         )
-        proposed_sql = expression.sub(
-            f"TRY_CAST({column_name} AS {new_type.upper()})", definition
+        proposed_sql, count = expression.subn(
+            lambda match: f"TRY_CAST({match.group(1)} AS {new_type.upper()})",
+            definition,
+        )
+        proposed_sql, confidence, manual_review_reason = _verify_rewrite(
+            proposed_sql, count
         )
     elif " JOIN " in upper:
         kind = SqlMatchKind.JOIN
@@ -163,3 +171,23 @@ def _classify(module: SqlModule, column_name: str, new_type: str) -> SqlDependen
         proposed_sql=proposed_sql,
         manual_review_reason=manual_review_reason,
     )
+
+
+def _verify_rewrite(
+    candidate: str, replacement_count: int
+) -> tuple[str | None, Confidence, str | None]:
+    if replacement_count == 0:
+        return (
+            None,
+            Confidence.LOW,
+            "Parser found the reference, but no verified expression rewrite was generated.",
+        )
+    try:
+        sqlglot.parse_one(candidate, read="tsql")
+    except ParseError:
+        return (
+            None,
+            Confidence.LOW,
+            "Generated SQL did not reparse successfully and requires manual review.",
+        )
+    return candidate, Confidence.HIGH, None

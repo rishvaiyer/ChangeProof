@@ -1,5 +1,5 @@
 from changeproof.models import Confidence, SqlMatchKind
-from changeproof.sql_impact import analyze_sql_modules, build_discovery_query
+from changeproof.sql_impact import SqlModule, analyze_sql_modules, build_discovery_query
 
 
 def test_discovery_query_is_read_only_and_searches_system_modules() -> None:
@@ -48,3 +48,26 @@ def test_join_without_a_semantic_rewrite_is_manual_review() -> None:
 
 def test_unrelated_column_has_no_hidden_dependencies() -> None:
     assert analyze_sql_modules("artist_id", "varchar", "bigint") == ()
+
+
+def test_qualified_convert_is_rewritten_and_reparsed() -> None:
+    modules = (
+        SqlModule(
+            schema_name="loyalty",
+            object_name="usp_qualified_customer",
+            object_type="SQL_STORED_PROCEDURE",
+            definition=(
+                "SELECT t.customer_id FROM loyalty.members t "
+                "WHERE CONVERT(INT, t.customer_id) = @customer_id;"
+            ),
+            regions=("WEST",),
+        ),
+    )
+
+    finding = analyze_sql_modules(
+        "customer_id", "varchar", "bigint", modules=modules
+    )[0]
+
+    assert finding.proposed_sql is not None
+    assert "TRY_CONVERT(BIGINT, t.customer_id)" in finding.proposed_sql
+    assert finding.manual_review_reason is None

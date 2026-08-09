@@ -106,5 +106,5 @@ ChangeProof exposes those limits. Dynamic SQL gets manual review. Missing geogra
 - Hosted write-back is simulated and labeled.
 - The local opt-in path is the real DataHub MCP and GraphQL integration.
 - Generated SQL is a review draft and is never auto-executed.
-- The AI reviewer explains deterministic evidence. It does not discover dependencies or assign risk.
+- The AI reviewer is advisory. It explains deterministic evidence but does not discover dependencies, assign risk, execute fixes, or control write-back.
 - Geographic flags are coordination prompts, not legal advice.
