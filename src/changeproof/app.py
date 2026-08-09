@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 
-from .demo import DemoAnalysis, DemoInputError, analyze_demo_change
+from .demo import DemoAnalysis, DemoInputError, analyze_demo_change, catalog_options
 from .live import analyze_live_change
 from .writeback import (
     WritebackUnavailableError,
@@ -180,6 +180,7 @@ def _render(
             "writeback_error": writeback_error,
             "writeback_results": writeback_results or [],
             "simulated_mode": writeback_mode() == "simulated",
+            "catalog": catalog_options(),
         },
         status_code=status_code,
     )

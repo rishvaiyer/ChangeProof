@@ -66,6 +66,17 @@ button:hover { background: var(--violet-hover); box-shadow: var(--shadow-lift); 
 button span { margin-left: 8px; }
 .error { margin: 16px 0 0; color: var(--red); background: var(--red-soft); border: 1px solid #F3DACE; border-radius: 8px; padding: 11px 14px; font-size: 13px; font-weight: 600; }
 
+.catalog { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line); }
+.catalog-label { margin: 0 0 14px; color: var(--subtle); font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.catalog-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.chip-form { display: block; }
+.chip { display: block; width: 100%; height: auto; text-align: left; padding: 13px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font-family: inherit; font-weight: 500; white-space: normal; transition: border-color .15s, background .15s, box-shadow .15s; }
+.chip:hover { background: #fff; border-color: var(--violet-line); box-shadow: var(--shadow-lift); }
+.chip-active { background: var(--violet-soft); border-color: var(--violet-line); }
+.chip-col { display: block; font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: #272D48; overflow-wrap: anywhere; }
+.chip-types { display: block; margin-top: 5px; font: 500 11px ui-monospace, monospace; color: var(--violet); }
+.chip-blurb { display: block; margin-top: 7px; font-size: 11px; line-height: 1.5; color: var(--subtle); }
+
 .results { padding-top: 34px; }
 .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .metric { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 20px; }
@@ -92,6 +103,11 @@ button span { margin-left: 8px; }
 .asset p { color: var(--subtle); font-size: 10px; margin: 0; overflow-wrap: anywhere; }
 .critical-tag { display: inline-block; margin-top: 13px; padding: 4px 7px; color: var(--amber); background: #FCEDC7; border-radius: 5px; font: 800 8px Mulish, sans-serif; letter-spacing: .09em; }
 .connector { align-self: center; color: #A3A7B9; }
+.asset-empty { border-style: dashed; background: var(--surface); grid-column: span 5; }
+.asset-empty h3 { color: var(--muted); }
+.reasons { margin: 20px 0 0; padding: 0; list-style: none; counter-reset: none; }
+.reasons li { counter-increment: none; padding: 7px 0 7px 20px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.reasons li::before { content: "—"; position: absolute; left: 0; color: var(--subtle); font: 600 12px Mulish, sans-serif; }
 
 .solution { margin-top: 68px; }
 .solution code { color: var(--violet); background: var(--violet-soft); border: 1px solid var(--violet-line); padding: 7px 11px; border-radius: 7px; font-size: 12px; font-weight: 600; }

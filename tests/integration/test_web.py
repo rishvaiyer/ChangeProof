@@ -43,7 +43,7 @@ def test_analyze_returns_validation_message() -> None:
     )
 
     assert response.status_code == 422
-    assert "Supported demo column" in response.text
+    assert "Unknown column" in response.text
 
 
 def test_dashboard_displays_injected_live_evidence_label() -> None:
@@ -246,3 +246,66 @@ def test_simulated_mode_never_claims_a_datahub_write(monkeypatch) -> None:
 
     assert "SIMULATED" in response.text
     assert "not sent to DataHub" in response.text
+
+
+def test_every_catalog_scenario_renders_without_error() -> None:
+    from changeproof.demo import CATALOG
+
+    for name, entry in CATALOG.items():
+        response = client.post(
+            "/analyze",
+            data={
+                "column": name,
+                "old_type": entry.old_type,
+                "new_type": entry.new_type,
+            },
+        )
+        assert response.status_code == 200, f"{name} failed to render"
+
+
+def test_zero_downstream_scenario_renders_the_empty_state() -> None:
+    # This previously raised UndefinedError on impacted_assets[-1].
+    response = client.post(
+        "/analyze",
+        data={"column": "listener_email", "old_type": "varchar", "new_type": "text"},
+    )
+
+    assert response.status_code == 200
+    assert "No downstream consumers" in response.text
+    assert "not proof" in response.text
+
+
+def test_dashboard_offers_the_other_catalog_columns() -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    for name in ("track_id", "payout_amount", "stream_ts", "listener_email"):
+        assert name in response.text
+
+
+def test_source_card_reflects_the_analyzed_column_not_a_hardcoded_one() -> None:
+    # stg_streams/artist_id used to be baked into the template, so every
+    # scenario claimed the wrong source table and owner.
+    response = client.post(
+        "/analyze",
+        data={"column": "listener_email", "old_type": "varchar", "new_type": "text"},
+    )
+
+    assert response.status_code == 200
+    assert '<span class="source-pill">stg_listeners.listener_email</span>' in response.text
+    assert "growth@sonicledger.demo" in response.text
+    assert '<span class="source-pill">stg_streams.artist_id</span>' not in response.text
+
+
+def test_payout_scenario_shows_its_own_source_table() -> None:
+    response = client.post(
+        "/analyze",
+        data={
+            "column": "payout_amount",
+            "old_type": "decimal(10,2)",
+            "new_type": "decimal(18,4)",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "fct_royalties.payout_amount" in response.text

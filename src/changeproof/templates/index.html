@@ -53,6 +53,26 @@
           <button type="submit">Analyze impact <span>↗</span></button>
         </form>
         {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+        {% if catalog %}
+        <div class="catalog">
+          <p class="catalog-label">Or try another column in the demo warehouse</p>
+          <div class="catalog-chips">
+            {% for entry in catalog %}
+            <form action="/analyze" method="post" class="chip-form">
+              <input type="hidden" name="column" value="{{ entry.column }}">
+              <input type="hidden" name="old_type" value="{{ entry.old_type }}">
+              <input type="hidden" name="new_type" value="{{ entry.new_type }}">
+              <button type="submit" class="chip{% if entry.column == values.get('column') %} chip-active{% endif %}">
+                <span class="chip-col">{{ entry.source_table }}.{{ entry.column }}</span>
+                <span class="chip-types">{{ entry.old_type }} → {{ entry.new_type }}</span>
+                <span class="chip-blurb">{{ entry.blurb }}</span>
+              </button>
+            </form>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
       </section>
 
       {% if analysis %}
@@ -70,7 +90,7 @@
           </article>
           <article class="metric">
             <p>MAX DEPTH</p>
-            <strong>{{ analysis.impact.impacted_assets[-1].hop }}</strong>
+            <strong>{{ analysis.impact.impacted_assets[-1].hop if analysis.impact.impacted_assets else 0 }}</strong>
             <span>Lineage hops</span>
           </article>
           <article class="metric critical">
@@ -85,25 +105,39 @@
             <p class="step-label">02 · TRACE</p>
             <h2>Observed downstream impact</h2>
           </div>
-          <span class="source-pill">stg_streams.artist_id</span>
+          <span class="source-pill">{{ analysis.source_label }}</span>
         </div>
 
         <div class="lineage">
           <article class="asset source-asset">
             <div class="asset-top"><span class="node-dot"></span><small>SOURCE</small></div>
-            <h3>stg_streams</h3>
-            <p>analytics@sonicledger.demo</p>
+            <h3>{{ analysis.source_table }}</h3>
+            <p>{{ analysis.source_owner }}</p>
           </article>
           {% for asset in analysis.impact.impacted_assets %}
           <span class="connector" aria-hidden="true">→</span>
           <article class="asset{% if asset.critical %} asset-critical{% endif %}">
             <div class="asset-top"><span class="node-dot"></span><small>HOP {{ asset.hop }}</small></div>
             <h3>{{ asset.name }}</h3>
-            <p>{{ asset.owners[0] }}</p>
+            <p>{{ asset.owners[0] if asset.owners else 'unowned' }}</p>
             {% if asset.critical %}<span class="critical-tag">CRITICAL</span>{% endif %}
           </article>
           {% endfor %}
+          {% if not analysis.impact.impacted_assets %}
+          <span class="connector" aria-hidden="true">→</span>
+          <article class="asset asset-empty">
+            <div class="asset-top"><span class="node-dot"></span><small>NONE OBSERVED</small></div>
+            <h3>No downstream consumers</h3>
+            <p>Absence of observed lineage is not proof that nothing reads this field.</p>
+          </article>
+          {% endif %}
         </div>
+
+        {% if analysis.impact.reasons %}
+        <ul class="reasons">
+          {% for reason in analysis.impact.reasons %}<li>{{ reason }}</li>{% endfor %}
+        </ul>
+        {% endif %}
 
         <section class="solution">
           <div class="section-heading">
