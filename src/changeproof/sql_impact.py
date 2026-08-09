@@ -1,6 +1,9 @@
 import re
 from dataclasses import dataclass
 
+import sqlglot
+from sqlglot.errors import ParseError
+
 from .models import Confidence, SqlDependency, SqlMatchKind
 
 
@@ -96,6 +99,22 @@ def _classify(module: SqlModule, column_name: str, new_type: str) -> SqlDependen
     proposed_sql: str | None = None
     manual_review_reason: str | None = None
 
+    try:
+        sqlglot.parse_one(definition, read="tsql")
+    except ParseError:
+        return SqlDependency(
+            schema_name=module.schema_name,
+            object_name=module.object_name,
+            object_type=module.object_type,
+            snippet=definition,
+            match_kind=SqlMatchKind.PREDICATE,
+            confidence=Confidence.LOW,
+            regions=list(module.regions),
+            manual_review_reason=(
+                "SQL parser could not verify this expression, so it needs manual review."
+            ),
+        )
+
     if "SP_EXECUTESQL" in upper or re.search(r"\bEXEC(?:UTE)?\b", upper):
         kind = SqlMatchKind.DYNAMIC_SQL
         confidence = Confidence.LOW
@@ -125,10 +144,8 @@ def _classify(module: SqlModule, column_name: str, new_type: str) -> SqlDependen
     elif " JOIN " in upper:
         kind = SqlMatchKind.JOIN
         confidence = Confidence.MEDIUM
-        proposed_sql = (
-            f"-- Verify both join operands are {new_type.upper()} "
-            "before replacing the source type.\n"
-            f"{definition}"
+        manual_review_reason = (
+            f"Verify both join operands are {new_type.upper()} before changing the source."
         )
     else:
         kind = SqlMatchKind.PREDICATE

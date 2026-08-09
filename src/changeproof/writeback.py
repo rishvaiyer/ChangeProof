@@ -302,6 +302,11 @@ def client_for_mode(settings: Settings | None = None):
     if mode == "simulated":
         return DEMO_CATALOG
     if mode == "datahub":
+        if not settings.changeproof_enable_real_writeback:
+            raise WritebackUnavailableError(
+                "Real DataHub write-back is disabled, so nothing was written. "
+                "Enable it only in a trusted local runtime."
+            )
         return DataHubWriteClient(settings=settings)
     raise WritebackUnavailableError(f"Unknown CHANGE_PROOF_WRITEBACK_MODE: {mode}")
 

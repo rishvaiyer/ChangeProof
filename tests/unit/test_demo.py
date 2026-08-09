@@ -65,6 +65,13 @@ def test_build_demo_request_validates_and_classifies_type_change() -> None:
     assert request.new_type == "bigint"
 
 
+def test_build_demo_request_rejects_an_unprepared_transition() -> None:
+    with pytest.raises(ValueError, match="Prepared transition"):
+        build_demo_request(
+            column="customer_id", old_type="varchar", new_type="nvarchar(max)"
+        )
+
+
 def test_compose_analysis_uses_supplied_evidence(
     fresh_complete_evidence: Callable[[], MetadataEvidence],
 ) -> None:

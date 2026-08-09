@@ -16,6 +16,10 @@ class Settings(BaseSettings):
         default="datahub",
         validation_alias="CHANGE_PROOF_WRITEBACK_MODE",
     )
+    changeproof_enable_real_writeback: bool = Field(
+        default=False,
+        validation_alias="CHANGE_PROOF_ENABLE_REAL_WRITEBACK",
+    )
 
     model_config = SettingsConfigDict(env_prefix="", extra="ignore")
 

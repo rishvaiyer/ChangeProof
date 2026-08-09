@@ -55,6 +55,7 @@ Lineage is an input, not the product. The product is the migration decision and 
 - No automatic SQL execution
 - Approval requests contain IDs only, never arbitrary catalog text
 - Hosted simulation and real DataHub write modes are visibly distinct
+- Real GraphQL mutation mode is disabled by default and enabled only by the trusted local live-demo launcher
 - Credential-free ordinary tests plus opt-in live DataHub verification
 
 ## Originality

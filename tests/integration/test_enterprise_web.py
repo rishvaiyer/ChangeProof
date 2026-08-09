@@ -1,9 +1,10 @@
 import json
+import re
 
 import pytest
 from fastapi.testclient import TestClient
 
-from changeproof.app import app
+from changeproof.app import app, create_app
 
 client = TestClient(app)
 
@@ -86,10 +87,38 @@ def test_ai_review_is_explicit_and_explains_missing_key(monkeypatch) -> None:
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     page = client.get("/fixes")
-    response = client.post("/ai-review")
+    match = re.search(r'name="analysis_token" value="([^"]+)"', page.text)
+    assert match is not None
+    response = client.post("/ai-review", data={"analysis_token": match.group(1)})
 
     assert page.status_code == 200
     assert 'action="/ai-review"' in page.text
     assert "AI_REVIEWED" not in page.text
     assert response.status_code == 503
     assert "OPENAI_API_KEY" in response.text
+
+
+def test_ai_review_rejects_a_missing_analysis_token() -> None:
+    response = client.post("/ai-review")
+
+    assert response.status_code == 403
+
+
+def test_navigation_preserves_a_validated_non_default_scenario() -> None:
+    response = client.get(
+        "/impact?column=artist_id&old_type=varchar&new_type=bigint"
+    )
+
+    assert response.status_code == 200
+    assert "artist_payouts" in response.text
+    assert "stg_streams.artist_id" in response.text
+    assert "/regions?column=artist_id" in response.text
+
+
+def test_invalid_artifact_name_does_not_invoke_provider() -> None:
+    def failing_provider(**values: str):
+        raise AssertionError("provider must not run for an invalid artifact name")
+
+    response = TestClient(create_app(failing_provider)).get("/artifacts/secret.env")
+
+    assert response.status_code == 404

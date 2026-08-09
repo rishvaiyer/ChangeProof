@@ -31,7 +31,7 @@
 </section>
 
 <section class="panel sql-panel">
-  <div class="panel-heading"><div><span class="section-index">02</span><h2>Hidden SQL consumers</h2><p>Read-only inspection of <code>sys.sql_modules</code> catches code-level dependencies beyond DataHub lineage.</p></div><a class="button button-secondary" href="/artifacts/discovery-query.sql">Download discovery query</a></div>
+  <div class="panel-heading"><div><span class="section-index">02</span><h2>Hidden SQL consumers</h2><p>Read-only inspection of <code>sys.sql_modules</code> catches code-level dependencies beyond DataHub lineage.</p></div><a class="button button-secondary" href="/artifacts/discovery-query.sql{{ nav_query }}">Download discovery query</a></div>
   {% if analysis.sql_dependencies %}
   <div class="sql-table" role="table" aria-label="Hidden SQL dependencies">
     <div class="sql-row sql-header" role="row"><span>Object</span><span>Match</span><span>Regions</span><span>Confidence</span><span>Status</span></div>
@@ -50,6 +50,6 @@
 
 <section class="plan-preview"><span class="section-index">03</span><div><small>PROPOSED SAFE ROLLOUT</small><h2>Proposed safe rollout</h2><p>{{ analysis.plan.summary }}</p></div><code>{{ analysis.plan.strategy }}</code></section>
 
-<section class="next-step-card"><div><span>Next</span><h2>See who must coordinate the change.</h2><p>Regional metadata turns dependency findings into an owner-ready release map.</p></div><a class="button button-primary" href="/regions">Open regional exposure →</a></section>
+<section class="next-step-card"><div><span>Next</span><h2>See who must coordinate the change.</h2><p>Regional metadata turns dependency findings into an owner-ready release map.</p></div><a class="button button-primary" href="/regions{{ nav_query }}">Open regional exposure →</a></section>
 {% endif %}
 {% endblock %}

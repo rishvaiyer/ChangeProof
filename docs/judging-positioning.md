@@ -43,7 +43,7 @@ The output is a change-review package, not a chart:
 1. Observed DataHub dependencies
 2. Hidden SQL references
 3. Regional owners and review flags
-4. Proposed static fixes
+4. Proposed fixes for verified convert and cast expressions
 5. Validation queries
 6. Rollback runbook
 7. DataHub incident, tag, and documentation drafts

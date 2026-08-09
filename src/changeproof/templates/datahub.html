@@ -17,6 +17,7 @@
 {% if writeback_results %}<div class="result-stack">{% for result in writeback_results %}<div class="write-result{% if result.applied %} success{% else %} failure{% endif %}"><span>{% if result.applied %}✓{% else %}!{% endif %}</span><div><strong>{{ result.action.value if result.action else "unknown" }}</strong><p>{% if result.applied %}{% if result.simulated %}recorded in the demo catalog, not sent to DataHub{% else %}written to DataHub{% endif %}{% else %}failed: {{ result.error }}{% endif %}</p></div>{% if result.simulated %}<b>SIMULATED</b>{% endif %}</div>{% endfor %}</div>{% endif %}
 
 <form class="proposal-form" action="/writeback/apply" method="post">
+  <input type="hidden" name="analysis_token" value="{{ analysis_token }}">
   <input type="hidden" name="column" value="{{ values.get('column', 'customer_id') }}">
   <input type="hidden" name="old_type" value="{{ values.get('old_type', 'varchar') }}">
   <input type="hidden" name="new_type" value="{{ values.get('new_type', 'bigint') }}">

@@ -28,7 +28,7 @@ Click **Explore impact**.
 
 **Screen:** Impact graph, then hidden SQL table.
 
-> DataHub supplies the column lineage, ownership, critical tags, and hop distance. ChangeProof then complements that graph with a read-only SQL Server module query. It finds a convert, a cast, a join, and dynamic SQL. Static references receive a draft fix. Dynamic SQL is visibly held for manual review.
+> DataHub supplies the column lineage, ownership, critical tags, and hop distance. ChangeProof then complements that graph with a read-only SQL Server module query. It finds a convert, a cast, a join, and dynamic SQL. Verified convert and cast expressions receive draft fixes. The join and dynamic SQL stay in manual review.
 
 Click **Regions**.
 

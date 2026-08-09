@@ -279,6 +279,11 @@ def build_demo_request(*, column: str, old_type: str, new_type: str) -> ChangeRe
     new_type = new_type.strip()
     if not old_type or not new_type or old_type == new_type:
         raise DemoInputError("Old and new types must be different non-empty values.")
+    if old_type != entry.old_type or new_type != entry.new_type:
+        raise DemoInputError(
+            f"Prepared transition for {entry.column} is "
+            f"{entry.old_type} to {entry.new_type}."
+        )
 
     return classify_schema_change(
         before_schema=[{"fieldPath": entry.column, "nativeDataType": old_type}],

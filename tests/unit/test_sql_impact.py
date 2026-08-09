@@ -35,5 +35,16 @@ def test_dynamic_sql_is_flagged_for_manual_review() -> None:
     assert "dynamic SQL" in (match.manual_review_reason or "")
 
 
+def test_join_without_a_semantic_rewrite_is_manual_review() -> None:
+    findings = analyze_sql_modules("customer_id", "varchar", "bigint")
+    match = next(
+        item for item in findings if item.object_name == "usp_match_regional_returns"
+    )
+
+    assert match.match_kind is SqlMatchKind.JOIN
+    assert match.proposed_sql is None
+    assert "join operands" in (match.manual_review_reason or "")
+
+
 def test_unrelated_column_has_no_hidden_dependencies() -> None:
     assert analyze_sql_modules("artist_id", "varchar", "bigint") == ()

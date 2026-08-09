@@ -1,3 +1,5 @@
+import re
+
 import anyio
 from fastapi.testclient import TestClient
 
@@ -7,6 +9,13 @@ from changeproof.enterprise import analyze_enterprise_change
 from changeproof.live import analyze_live_change
 
 client = TestClient(app)
+
+
+def _analysis_token(path: str = "/datahub") -> str:
+    response = client.get(path)
+    match = re.search(r'name="analysis_token" value="([^"]+)"', response.text)
+    assert match is not None
+    return match.group(1)
 
 
 def test_healthz() -> None:
@@ -153,7 +162,7 @@ def test_dashboard_shows_writeback_drafts_and_the_approval_gate() -> None:
 def test_writeback_requires_selecting_a_proposal() -> None:
     response = client.post(
         "/writeback/apply",
-        data={"column": "artist_id", "old_type": "varchar", "new_type": "bigint"},
+        data={"analysis_token": _analysis_token()},
     )
 
     assert response.status_code == 422
@@ -172,6 +181,7 @@ def test_writeback_refuses_when_no_datahub_is_reachable(monkeypatch) -> None:
             "old_type": "varchar",
             "new_type": "bigint",
             "approve": "incident-source",
+            "analysis_token": _analysis_token(),
         },
     )
 
@@ -179,18 +189,37 @@ def test_writeback_refuses_when_no_datahub_is_reachable(monkeypatch) -> None:
     assert "nothing was written" in response.text
 
 
-def test_writeback_validates_the_change_before_drafting() -> None:
+def test_writeback_ignores_forged_change_values(monkeypatch) -> None:
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
     response = client.post(
         "/writeback/apply",
         data={
             "column": "unknown",
-            "old_type": "varchar",
-            "new_type": "bigint",
-            "approve": "incident-source",
+            "old_type": "attacker_type",
+            "new_type": "attacker_type_2",
+            "approve": "docs-source",
+            "analysis_token": _analysis_token(),
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert "AsterVale Living" in response.text
+    assert "attacker_type" not in response.text
+
+
+def test_writeback_rejects_missing_or_tampered_analysis_token(monkeypatch) -> None:
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
+
+    missing = client.post(
+        "/writeback/apply", data={"approve": "incident-source"}
+    )
+    tampered = client.post(
+        "/writeback/apply",
+        data={"approve": "incident-source", "analysis_token": "tampered"},
+    )
+
+    assert missing.status_code == 403
+    assert tampered.status_code == 403
 
 
 def test_static_assets_must_revalidate() -> None:
@@ -224,6 +253,7 @@ def test_simulated_mode_labels_the_flow_and_completes_it(monkeypatch) -> None:
             "old_type": "varchar",
             "new_type": "bigint",
             "approve": "incident-source",
+            "analysis_token": _analysis_token(),
         },
     )
 
@@ -242,6 +272,7 @@ def test_simulated_mode_never_claims_a_datahub_write(monkeypatch) -> None:
             "old_type": "varchar",
             "new_type": "bigint",
             "approve": "docs-source",
+            "analysis_token": _analysis_token(),
         },
     )
 

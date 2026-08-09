@@ -44,12 +44,29 @@ def assess_regions(
 ) -> tuple[RegionExposure, ...]:
     assets_by_name = {asset.name: asset for asset in evidence.downstream}
     exposures: list[RegionExposure] = []
+    active_regions = {
+        region
+        for asset_name, metadata in asset_regions.items()
+        if asset_name in assets_by_name
+        for region in metadata.regions
+    }
+    active_regions.update(
+        region for dependency in sql_dependencies for region in dependency.regions
+    )
+    has_unknown = any(name not in asset_regions for name in assets_by_name) or any(
+        not dependency.regions for dependency in sql_dependencies
+    )
 
     for region in REGION_ORDER:
+        if region == "UNKNOWN" and not has_unknown:
+            continue
+        if region != "UNKNOWN" and region not in active_regions:
+            continue
         names: list[str] = []
         owners: list[str] = []
         flags: list[str] = []
         critical_customer_data = False
+        missing_owner = False
 
         for asset_name, metadata in asset_regions.items():
             if asset_name not in assets_by_name or region not in metadata.regions:
@@ -57,6 +74,7 @@ def assess_regions(
             names.append(asset_name)
             owners.extend(metadata.owners)
             flags.extend(metadata.policy_flags)
+            missing_owner = missing_owner or not metadata.owners
             critical_customer_data = (
                 critical_customer_data or metadata.critical_customer_data
             )
@@ -69,6 +87,9 @@ def assess_regions(
 
         if region == "UNKNOWN":
             flags.append("REGION_METADATA_MISSING")
+            risk = RegionRisk.REVIEW
+        elif missing_owner:
+            flags.append("OWNER_METADATA_MISSING")
             risk = RegionRisk.REVIEW
         elif critical_customer_data:
             risk = RegionRisk.HIGH

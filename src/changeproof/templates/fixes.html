@@ -9,10 +9,10 @@
 
 {% if analysis and analysis.artifacts %}
 <section class="artifact-strip">
-  <a href="/artifacts/impact-report.json"><span class="file-icon json">{ }</span><div><strong>Impact report</strong><small>JSON · full evidence</small></div><b>↓</b></a>
-  <a href="/artifacts/discovery-query.sql"><span class="file-icon sql">SQL</span><div><strong>Discovery query</strong><small>SQL Server · read only</small></div><b>↓</b></a>
-  <a href="/artifacts/proposed-fixes.sql"><span class="file-icon fix">✦</span><div><strong>Proposed fixes</strong><small>SQL · review draft</small></div><b>↓</b></a>
-  <a href="/artifacts/changeproof.sarif"><span class="file-icon sarif">S</span><div><strong>SARIF results</strong><small>CI compatible</small></div><b>↓</b></a>
+  <a href="/artifacts/impact-report.json{{ nav_query }}"><span class="file-icon json">{ }</span><div><strong>Impact report</strong><small>JSON · full evidence</small></div><b>↓</b></a>
+  <a href="/artifacts/discovery-query.sql{{ nav_query }}"><span class="file-icon sql">SQL</span><div><strong>Discovery query</strong><small>SQL Server · read only</small></div><b>↓</b></a>
+  <a href="/artifacts/proposed-fixes.sql{{ nav_query }}"><span class="file-icon fix">✦</span><div><strong>Proposed fixes</strong><small>SQL · review draft</small></div><b>↓</b></a>
+  <a href="/artifacts/changeproof.sarif{{ nav_query }}"><span class="file-icon sarif">S</span><div><strong>SARIF results</strong><small>CI compatible</small></div><b>↓</b></a>
 </section>
 
 <section class="fix-grid">
@@ -34,10 +34,10 @@
   <aside class="fix-sidebar">
     <article class="panel ai-card">
       <span class="sparkle">✦</span><small>OPTIONAL AI REVIEW</small><h2>Second-pass migration review</h2><p>Ask OpenAI to explain the deterministic evidence and surface unresolved risks. It cannot change scores or execute SQL.</p>
-      {% if analysis.ai_review %}<div class="ai-result"><strong>{{ analysis.ai_review.status }}</strong><p>{{ analysis.ai_review.summary }}</p></div>{% elif ai_error %}<div class="alert alert-error"><span>{{ ai_error }}</span></div>{% else %}<form action="/ai-review" method="post"><button class="button button-dark" type="submit">Run AI review <span>✦</span></button></form>{% endif %}
+      {% if analysis.ai_review %}<div class="ai-result"><strong>{{ analysis.ai_review.status }}</strong><p>{{ analysis.ai_review.summary }}</p>{% if analysis.ai_review.fix_notes %}<h3>Fix notes</h3><ul>{% for note in analysis.ai_review.fix_notes %}<li>{{ note }}</li>{% endfor %}</ul>{% endif %}{% if analysis.ai_review.unresolved_risks %}<h3>Unresolved risks</h3><ul>{% for risk in analysis.ai_review.unresolved_risks %}<li>{{ risk }}</li>{% endfor %}</ul>{% endif %}</div>{% elif ai_error %}<div class="alert alert-error"><span>{{ ai_error }}</span></div>{% else %}<form action="/ai-review" method="post"><input type="hidden" name="analysis_token" value="{{ analysis_token }}"><button class="button button-dark" type="submit">Run AI review <span>✦</span></button></form>{% endif %}
       <small class="cost-note">Runs only when clicked · uses Railway OPENAI_API_KEY</small>
     </article>
-    <article class="panel control-card"><span class="section-index">02</span><h3>Release controls</h3><a href="/artifacts/validation-queries.sql"><span>✓</span><div><strong>Validation queries</strong><small>Conversion + null checks</small></div><b>↓</b></a><a href="/artifacts/rollback.sql"><span>↶</span><div><strong>Rollback runbook</strong><small>Reverse dependency order</small></div><b>↓</b></a><a href="/rollout"><span>↗</span><div><strong>Release sequence</strong><small>Owner-gated rollout</small></div><b>→</b></a></article>
+    <article class="panel control-card"><span class="section-index">02</span><h3>Release controls</h3><a href="/artifacts/validation-queries.sql{{ nav_query }}"><span>✓</span><div><strong>Validation queries</strong><small>Conversion + null checks</small></div><b>↓</b></a><a href="/artifacts/rollback.sql{{ nav_query }}"><span>↶</span><div><strong>Rollback runbook</strong><small>Reverse dependency order</small></div><b>↓</b></a><a href="/rollout{{ nav_query }}"><span>↗</span><div><strong>Release sequence</strong><small>Owner-gated rollout</small></div><b>→</b></a></article>
   </aside>
 </section>
 {% endif %}

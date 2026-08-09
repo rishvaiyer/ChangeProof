@@ -8,7 +8,7 @@
 </section>
 
 {% if analysis %}
-<section class="readiness-banner"><div><span class="readiness-score">87</span><div><small>RELEASE READINESS</small><h2>Ready for coordinated review</h2><p>Technical fixes are generated. Dynamic SQL and regional approvals remain open.</p></div></div><div class="readiness-items"><span><i class="done"></i>Lineage traced</span><span><i class="done"></i>Fixes generated</span><span><i class="open"></i>Owner approvals</span></div></section>
+<section class="readiness-banner"><div><span class="readiness-score">{{ analysis.impact.confidence.value }}</span><div><small>EVIDENCE CONFIDENCE</small><h2>Ready for coordinated review</h2><p>Technical fix drafts are available. Dynamic SQL and regional approvals remain open.</p></div></div><div class="readiness-items"><span><i class="done"></i>Lineage traced</span><span><i class="done"></i>Fix drafts ready</span><span><i class="open"></i>Owner approvals</span></div></section>
 
 <section class="rollout-layout">
   <article class="panel timeline-panel">
@@ -21,11 +21,11 @@
   </article>
 
   <aside class="rollout-sidebar">
-    <article class="panel gate-card"><span class="section-index">02</span><h3>Validation gates</h3><ul><li><i>✓</i><span><strong>Conversion coverage</strong><small>Zero invalid BIGINT conversions</small></span></li><li><i>✓</i><span><strong>dbt contracts</strong><small>Compile and schema tests pass</small></span></li><li><i>✓</i><span><strong>Regional owners</strong><small>High-risk teams acknowledge</small></span></li><li><i>✓</i><span><strong>SQL review</strong><small>Dynamic module manually inspected</small></span></li></ul><a class="button button-secondary" href="/artifacts/validation-queries.sql">Download validation SQL</a></article>
-    <article class="panel rollback-card"><span>↶</span><small>ROLLBACK GUARDRAIL</small><h3>Original contract stays live</h3><p>The <code>VARCHAR</code> field remains available until dependent owners confirm the <code>BIGINT</code> cutover.</p><a href="/artifacts/rollback.sql">Open rollback runbook →</a></article>
+    <article class="panel gate-card"><span class="section-index">02</span><h3>Validation gates</h3><ul><li><i>✓</i><span><strong>Conversion coverage</strong><small>Zero invalid {{ analysis.request.new_type | upper }} conversions</small></span></li><li><i>✓</i><span><strong>dbt contracts</strong><small>Compile and schema tests pass</small></span></li><li><i>✓</i><span><strong>Regional owners</strong><small>High-risk teams acknowledge</small></span></li><li><i>✓</i><span><strong>SQL review</strong><small>Dynamic module manually inspected</small></span></li></ul><a class="button button-secondary" href="/artifacts/validation-queries.sql{{ nav_query }}">Download validation SQL</a></article>
+    <article class="panel rollback-card"><span>↶</span><small>ROLLBACK GUARDRAIL</small><h3>Original contract stays live</h3><p>The <code>{{ analysis.request.old_type | upper }}</code> field remains available until dependent owners confirm the <code>{{ analysis.request.new_type | upper }}</code> cutover.</p><a href="/artifacts/rollback.sql{{ nav_query }}">Open rollback runbook →</a></article>
   </aside>
 </section>
 
-<section class="next-step-card"><div><span>Publish decision</span><h2>Put the plan where data teams work.</h2><p>Draft the incident, critical tags, and migration notes back into DataHub.</p></div><a class="button button-primary" href="/datahub">Review DataHub actions →</a></section>
+<section class="next-step-card"><div><span>Publish decision</span><h2>Put the plan where data teams work.</h2><p>Draft the incident, critical tags, and migration notes back into DataHub.</p></div><a class="button button-primary" href="/datahub{{ nav_query }}">Review DataHub actions →</a></section>
 {% endif %}
 {% endblock %}

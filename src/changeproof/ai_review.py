@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 
 from openai import OpenAI
 
@@ -43,6 +44,8 @@ def review_analysis(
                 "the supplied deterministic synthetic evidence. Explain the safest "
                 "fixes and unresolved risks. Do not invent assets, dependencies, "
                 "regions, execution results, or compliance claims."
+                " Put every asset, SQL object, field, region, and type identifier "
+                "inside backticks so grounding can be validated."
             ),
             input=payload_json,
             text_format=AiReview,
@@ -60,8 +63,35 @@ def review_analysis(
         raise AiReviewUnavailable(
             "OpenAI returned no structured review. The deterministic analysis is unchanged."
         )
+    _validate_grounding(result, analysis)
     _CACHE[cache_key] = result
     return result
+
+
+def _validate_grounding(review: AiReview, analysis: DemoAnalysis) -> None:
+    allowed = {
+        analysis.source_label,
+        analysis.source_table,
+        analysis.evidence.source_field,
+        analysis.request.old_type or "",
+        analysis.request.new_type or "",
+        analysis.plan.strategy,
+    }
+    allowed.update(asset.name for asset in analysis.impact.impacted_assets)
+    allowed.update(item.region for item in analysis.region_exposures)
+    for item in analysis.sql_dependencies:
+        allowed.add(item.object_name)
+        allowed.add(f"{item.schema_name}.{item.object_name}")
+
+    text = "\n".join(
+        [review.summary, *review.fix_notes, *review.unresolved_risks]
+    )
+    unsupported = sorted(set(re.findall(r"`([^`]+)`", text)) - allowed)
+    if unsupported:
+        raise AiReviewUnavailable(
+            f"OpenAI referenced an unsupported identifier: {unsupported[0]}. "
+            "The deterministic analysis is unchanged."
+        )
 
 
 def _evidence_payload(analysis: DemoAnalysis) -> dict[str, object]:

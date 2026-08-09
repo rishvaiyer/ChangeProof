@@ -1,6 +1,17 @@
 from changeproof.demo import analyze_demo_change
-from changeproof.models import Confidence, RegionRisk, SqlDependency, SqlMatchKind
-from changeproof.regions import ASTERVALE_ASSET_REGIONS, assess_regions
+from changeproof.models import (
+    Confidence,
+    LineageNode,
+    MetadataEvidence,
+    RegionRisk,
+    SqlDependency,
+    SqlMatchKind,
+)
+from changeproof.regions import (
+    ASTERVALE_ASSET_REGIONS,
+    AssetRegionMetadata,
+    assess_regions,
+)
 
 
 def _dependencies() -> tuple[SqlDependency, ...]:
@@ -86,3 +97,43 @@ def test_region_without_critical_customer_data_is_managed_exposure() -> None:
     )
 
     assert south.risk is RegionRisk.MEDIUM
+
+
+def test_unknown_is_omitted_when_every_dependency_is_mapped() -> None:
+    evidence = analyze_demo_change(
+        column="customer_id", old_type="varchar", new_type="bigint"
+    ).evidence
+    mapped_dependencies = tuple(item for item in _dependencies() if item.regions)
+
+    exposures = assess_regions(evidence, mapped_dependencies, ASTERVALE_ASSET_REGIONS)
+
+    assert "UNKNOWN" not in [item.region for item in exposures]
+
+
+def test_missing_region_owner_requires_review() -> None:
+    evidence = MetadataEvidence(
+        source_urn="urn:li:dataset:(urn:li:dataPlatform:dbt,test.source,PROD)",
+        source_field="customer_id",
+        column_lineage_available=True,
+        downstream=[
+            LineageNode(
+                urn="urn:li:dataset:(urn:li:dataPlatform:dbt,test.asset,PROD)",
+                name="unowned_asset",
+                entity_type="dataset",
+                hop=1,
+            )
+        ],
+        owners=["source-owner@example.com"],
+        assertions_passing=True,
+        metadata_age_hours=0,
+    )
+
+    exposure = assess_regions(
+        evidence,
+        (),
+        {"unowned_asset": AssetRegionMetadata(regions=("NORTHEAST",), owners=())},
+    )[0]
+
+    assert exposure.region == "NORTHEAST"
+    assert exposure.risk is RegionRisk.REVIEW
+    assert "OWNER_METADATA_MISSING" in exposure.policy_flags

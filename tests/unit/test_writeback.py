@@ -190,7 +190,18 @@ def test_mode_selects_the_client(monkeypatch):
     assert isinstance(client_for_mode(), SimulatedWriteClient)
 
     monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "datahub")
+    monkeypatch.setenv("CHANGE_PROOF_ENABLE_REAL_WRITEBACK", "true")
     assert isinstance(client_for_mode(), DataHubWriteClient)
+
+
+def test_real_writeback_requires_an_explicit_runtime_enable(monkeypatch):
+    from changeproof.writeback import client_for_mode
+
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "datahub")
+    monkeypatch.delenv("CHANGE_PROOF_ENABLE_REAL_WRITEBACK", raising=False)
+
+    with pytest.raises(WritebackUnavailableError, match="nothing was written"):
+        client_for_mode()
 
 
 def test_unknown_mode_is_rejected(monkeypatch):

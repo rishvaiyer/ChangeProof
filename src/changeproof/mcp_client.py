@@ -126,7 +126,7 @@ class DataHubMcpClient:
     async def _open_session(self) -> AsyncIterator[ClientSession]:
         server = StdioServerParameters(
             command="uvx",
-            args=["mcp-server-datahub@latest"],
+            args=["mcp-server-datahub@0.6.0"],
             env={
                 "DATAHUB_GMS_URL": self._settings.datahub_gms_url,
                 "DATAHUB_GMS_TOKEN": self._settings.datahub_gms_token,

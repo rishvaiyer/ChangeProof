@@ -1,8 +1,14 @@
+import base64
+import hashlib
+import hmac
+import json
 import os
+import secrets
+import time
 from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
@@ -47,6 +53,8 @@ def provider_from_env() -> AnalysisProvider:
 
 def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
     application = FastAPI(title="ChangeProof", docs_url=None, redoc_url=None)
+    signing_key = secrets.token_bytes(32)
+    ai_last_request: dict[str, float] = {}
     application.mount(
         "/static", StaticFiles(directory=PACKAGE_DIR / "static"), name="static"
     )
@@ -60,6 +68,42 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
 
     def current_provider() -> AnalysisProvider:
         return analysis_provider or provider_from_env()
+
+    def baseline_values() -> dict[str, str]:
+        if analysis_provider is None and os.getenv(
+            "CHANGE_PROOF_EVIDENCE_MODE", "bundled"
+        ).strip().lower() == "datahub":
+            return {"column": "artist_id", "old_type": "varchar", "new_type": "bigint"}
+        return dict(DEFAULT_VALUES)
+
+    def sign_values(values: dict[str, str]) -> str:
+        payload = json.dumps(values, separators=(",", ":"), sort_keys=True).encode()
+        encoded = base64.urlsafe_b64encode(payload).decode().rstrip("=")
+        signature = hmac.new(signing_key, encoded.encode(), hashlib.sha256).hexdigest()
+        return f"{encoded}.{signature}"
+
+    def verify_values(token: str) -> dict[str, str]:
+        try:
+            encoded, supplied_signature = token.split(".", 1)
+            expected_signature = hmac.new(
+                signing_key, encoded.encode(), hashlib.sha256
+            ).hexdigest()
+            if not hmac.compare_digest(supplied_signature, expected_signature):
+                raise ValueError
+            padded = encoded + "=" * (-len(encoded) % 4)
+            payload = json.loads(base64.urlsafe_b64decode(padded).decode())
+            if set(payload) != set(DEFAULT_VALUES) or not all(
+                isinstance(payload[key], str) for key in DEFAULT_VALUES
+            ):
+                raise ValueError
+        except (ValueError, TypeError, json.JSONDecodeError) as exc:
+            raise HTTPException(status_code=403, detail="Invalid analysis token") from exc
+        return {key: payload[key] for key in DEFAULT_VALUES}
+
+    def request_values(request: Request) -> dict[str, str]:
+        if not any(key in request.query_params for key in DEFAULT_VALUES):
+            return baseline_values()
+        return {key: request.query_params.get(key, "") for key in DEFAULT_VALUES}
 
     def render_page(
         request: Request,
@@ -87,24 +131,29 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 "writeback_results": writeback_results or [],
                 "simulated_mode": writeback_mode() == "simulated",
                 "ai_error": ai_error,
+                "analysis_token": sign_values(values) if analysis else "",
+                "nav_query": (
+                    "" if values == baseline_values() else f"?{urlencode(values)}"
+                ),
             },
             status_code=status_code,
         )
 
     def default_page(request: Request, page: str) -> HTMLResponse:
+        values = request_values(request)
         try:
-            analysis = current_provider()(**DEFAULT_VALUES)
+            analysis = current_provider()(**values)
         except (RuntimeError, ValueError) as exc:
             return render_page(
                 request,
                 page="analyze",
                 analysis=None,
-                values=DEFAULT_VALUES,
+                values=values,
                 error=str(exc),
                 status_code=503,
             )
         return render_page(
-            request, page=page, analysis=analysis, values=DEFAULT_VALUES
+            request, page=page, analysis=analysis, values=values
         )
 
     @application.get("/healthz")
@@ -161,33 +210,22 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         return render_page(request, page="impact", analysis=analysis, values=values)
 
     @application.get("/artifacts/{artifact_name}")
-    def artifact(artifact_name: str) -> Response:
-        analysis = current_provider()(**DEFAULT_VALUES)
+    def artifact(request: Request, artifact_name: str) -> Response:
+        artifact_fields = {
+            "impact-report.json": ("impact_report_json", "application/json"),
+            "discovery-query.sql": ("discovery_query_sql", "text/plain"),
+            "proposed-fixes.sql": ("proposed_fixes_sql", "text/plain"),
+            "validation-queries.sql": ("validation_queries_sql", "text/plain"),
+            "rollback.sql": ("rollback_sql", "text/plain"),
+            "changeproof.sarif": ("sarif_json", "application/json"),
+        }
+        if artifact_name not in artifact_fields:
+            raise HTTPException(status_code=404, detail="Artifact not found")
+        analysis = current_provider()(**request_values(request))
         if analysis.artifacts is None:
             raise HTTPException(status_code=404, detail="No artifacts for this scenario")
-        artifacts = {
-            "impact-report.json": (
-                analysis.artifacts.impact_report_json,
-                "application/json",
-            ),
-            "discovery-query.sql": (
-                analysis.artifacts.discovery_query_sql,
-                "text/plain",
-            ),
-            "proposed-fixes.sql": (
-                analysis.artifacts.proposed_fixes_sql,
-                "text/plain",
-            ),
-            "validation-queries.sql": (
-                analysis.artifacts.validation_queries_sql,
-                "text/plain",
-            ),
-            "rollback.sql": (analysis.artifacts.rollback_sql, "text/plain"),
-            "changeproof.sarif": (analysis.artifacts.sarif_json, "application/json"),
-        }
-        if artifact_name not in artifacts:
-            raise HTTPException(status_code=404, detail="Artifact not found")
-        content, media_type = artifacts[artifact_name]
+        field_name, media_type = artifact_fields[artifact_name]
+        content = getattr(analysis.artifacts, field_name)
         return Response(
             content=content,
             media_type=media_type,
@@ -196,16 +234,23 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
 
     @application.post("/ai-review", response_class=HTMLResponse)
     async def ai_review(request: Request) -> HTMLResponse:
+        form = parse_qs((await request.body()).decode("utf-8"))
+        values = verify_values((form.get("analysis_token") or [""])[0])
+        client_key = request.client.host if request.client else "unknown"
+        now = time.monotonic()
+        if now - ai_last_request.get(client_key, 0) < 15:
+            raise HTTPException(status_code=429, detail="AI review rate limit")
+        ai_last_request[client_key] = now
         try:
-            analysis = await run_in_threadpool(current_provider(), **DEFAULT_VALUES)
+            analysis = await run_in_threadpool(current_provider(), **values)
             review = await run_in_threadpool(review_analysis, analysis)
         except (AiReviewUnavailable, RuntimeError, ValueError) as exc:
-            analysis = current_provider()(**DEFAULT_VALUES)
+            analysis = current_provider()(**values)
             return render_page(
                 request,
                 page="fixes",
                 analysis=analysis,
-                values=DEFAULT_VALUES,
+                values=values,
                 ai_error=str(exc),
                 status_code=503,
             )
@@ -213,15 +258,13 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
             request,
             page="fixes",
             analysis=replace(analysis, ai_review=review),
-            values=DEFAULT_VALUES,
+            values=values,
         )
 
     @application.post("/writeback/apply", response_class=HTMLResponse)
     async def writeback_apply(request: Request) -> HTMLResponse:
         form = parse_qs((await request.body()).decode("utf-8"))
-        values = {
-            key: (form.get(key) or [DEFAULT_VALUES[key]])[0] for key in DEFAULT_VALUES
-        }
+        values = verify_values((form.get("analysis_token") or [""])[0])
         approved_ids = form.get("approve", [])
         try:
             analysis = await run_in_threadpool(current_provider(), **values)

@@ -3,11 +3,12 @@
 {% block breadcrumb %}Regions{% endblock %}
 {% block content %}
 <section class="page-heading heading-row">
-  <div><span class="kicker"><i></i>GEOGRAPHIC CHANGE INTELLIGENCE</span><h1>Regional Exposure</h1><p>Connect the <code>customer_id</code> change to operating regions, accountable owners, and review flags.</p></div>
+  <div><span class="kicker"><i></i>GEOGRAPHIC CHANGE INTELLIGENCE</span><h1>Regional Exposure</h1><p>Connect the <code>{{ analysis.evidence.source_field if analysis else "proposed field" }}</code> change to operating regions, accountable owners, and review flags.</p></div>
   <span class="environment-chip"><i></i>NATIONAL RETAIL · USA</span>
 </section>
 
 {% if analysis %}
+{% if analysis.region_exposures %}
 <section class="region-layout">
   <article class="panel map-panel">
     <div class="panel-heading"><div><span class="section-index">01</span><h2>Enterprise exposure map</h2><p>Synthetic operating footprint, grouped by DataHub structured properties.</p></div><span class="safe-badge">5 REGION GROUPS</span></div>
@@ -19,7 +20,7 @@
       </div>
       {% endif %}
       {% endfor %}
-      <div class="map-center"><span>ASTER﻿VALE</span><strong>420</strong><small>stores</small></div>
+      <div class="map-center"><span>{{ analysis.company_name | upper }}</span><strong>420</strong><small>stores</small></div>
     </div>
     <div class="map-legend"><span><i class="risk-dot high"></i>High coordination</span><span><i class="risk-dot medium"></i>Managed exposure</span><span><i class="risk-dot review"></i>Metadata review</span></div>
   </article>
@@ -37,7 +38,7 @@
 </section>
 
 <section class="panel region-table-panel">
-  <div class="panel-heading"><div><span class="section-index">03</span><h2>Owner coordination matrix</h2><p>Every region includes the exact evidence and metadata flags driving its status.</p></div><a class="button button-secondary" href="/artifacts/impact-report.json">Export JSON</a></div>
+  <div class="panel-heading"><div><span class="section-index">03</span><h2>Owner coordination matrix</h2><p>Every region includes the exact evidence and metadata flags driving its status.</p></div><a class="button button-secondary" href="/artifacts/impact-report.json{{ nav_query }}">Export JSON</a></div>
   <div class="region-table" role="table" aria-label="Regional exposure details">
     <div class="region-row region-header" role="row"><span>Region</span><span>Exposed assets</span><span>SQL consumers</span><span>Owners</span><span>Flags</span></div>
     {% for region in analysis.region_exposures %}
@@ -52,6 +53,9 @@
   </div>
 </section>
 
-<section class="next-step-card coral"><div><span>Decision</span><h2>Generate the fixes and controls.</h2><p>Move from impact evidence to reviewable SQL, validation, and rollback artifacts.</p></div><a class="button button-primary" href="/fixes">Open Fix Studio →</a></section>
+<section class="next-step-card coral"><div><span>Decision</span><h2>Generate the fixes and controls.</h2><p>Move from impact evidence to reviewable SQL, validation, and rollback artifacts.</p></div><a class="button button-primary" href="/fixes{{ nav_query }}">Open Fix Studio →</a></section>
+{% else %}
+<section class="panel empty-state"><strong>No regional metadata is bundled for this scenario</strong><p>The live SonicLedger path currently verifies DataHub schema and lineage only. ChangeProof does not infer geography when structured properties are absent.</p></section>
+{% endif %}
 {% endif %}
 {% endblock %}

@@ -1,4 +1,5 @@
 import json
+import re
 
 from .demo import DemoAnalysis
 from .models import ArtifactBundle
@@ -79,10 +80,11 @@ def _proposed_fixes(analysis: DemoAnalysis) -> str:
 def _validation_queries(analysis: DemoAnalysis) -> str:
     table = analysis.source_table
     column = analysis.evidence.source_field
+    new_type = _safe_sql_type(analysis.request.new_type or "")
     return f"""-- Validate conversion coverage before cutover
 SELECT
     COUNT_BIG(*) AS total_rows,
-    SUM(CASE WHEN {column} IS NOT NULL AND TRY_CONVERT(BIGINT, {column}) IS NULL
+    SUM(CASE WHEN {column} IS NOT NULL AND TRY_CONVERT({new_type}, {column}) IS NULL
         THEN 1 ELSE 0 END) AS conversion_failures
 FROM {table};
 
@@ -92,6 +94,13 @@ FROM {table}
 GROUP BY {column}
 HAVING {column} IS NULL;
 """
+
+
+def _safe_sql_type(value: str) -> str:
+    normalized = value.strip().upper()
+    if not re.fullmatch(r"[A-Z][A-Z0-9_]*(?:\(\d+(?:,\d+)?\))?", normalized):
+        raise ValueError("Unsupported SQL type in generated validation artifact.")
+    return normalized
 
 
 def _rollback(analysis: DemoAnalysis) -> str:

@@ -1,5 +1,6 @@
 from enum import StrEnum
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -69,7 +70,7 @@ class ArtifactBundle(BaseModel):
 
 
 class AiReview(BaseModel):
-    status: str = "AI_REVIEWED"
+    status: Literal["AI_REVIEWED"] = "AI_REVIEWED"
     summary: str
     fix_notes: list[str] = Field(default_factory=list)
     unresolved_risks: list[str] = Field(default_factory=list)

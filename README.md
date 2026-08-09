@@ -47,7 +47,7 @@ stg_orders.customer_id
   -> executive_revenue_dashboard [critical]
 ```
 
-ChangeProof also searches SQL Server module definitions and finds four code-level consumers, including `CONVERT`, `CAST`, join logic, and dynamic SQL. Static expressions receive reviewable drafts. Dynamic SQL is marked for manual review.
+ChangeProof also searches SQL Server module definitions and finds four code-level consumers, including `CONVERT`, `CAST`, join logic, and dynamic SQL. Recognized convert and cast expressions receive reviewable drafts. Joins and dynamic SQL are marked for manual review unless a semantic rewrite can be verified.
 
 ## What DataHub contributes
 
@@ -139,6 +139,8 @@ The current live integration:
 - Reads schema and lineage through the official DataHub MCP server
 - Uses the same deterministic impact and remediation engine
 - Applies approved write-back proposals through DataHub GraphQL
+
+Real GraphQL mutation mode is disabled by default. `make live-demo` enables it only for the trusted loopback runtime after the local DataHub checks pass.
 
 The AsterVale regional properties are bundled synthetic evidence in hosted mode. They model the domains and structured properties an enterprise deployment would ingest. They are not presented as live DataHub Cloud data.
 

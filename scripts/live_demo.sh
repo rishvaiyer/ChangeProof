@@ -77,6 +77,7 @@ if "$lsof_bin" -tiTCP:8000 -sTCP:LISTEN >/dev/null 2>&1; then
 fi
 
 nohup env CHANGE_PROOF_EVIDENCE_MODE=datahub \
+  CHANGE_PROOF_ENABLE_REAL_WRITEBACK=true \
   "$uvicorn_bin" changeproof.app:app --host 127.0.0.1 --port 8000 \
   </dev/null >"$log_file" 2>&1 &
 dashboard_pid=$!

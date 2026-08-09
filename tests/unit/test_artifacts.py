@@ -1,5 +1,7 @@
 import json
+from dataclasses import replace
 
+from changeproof.artifacts import build_artifacts
 from changeproof.enterprise import analyze_enterprise_change
 
 
@@ -33,3 +35,14 @@ def test_artifacts_are_deterministic() -> None:
     ).artifacts
 
     assert first == second
+
+
+def test_validation_sql_uses_the_validated_proposed_type() -> None:
+    analysis = analyze_enterprise_change(
+        column="customer_id", old_type="varchar", new_type="bigint"
+    )
+    request = analysis.request.model_copy(update={"new_type": "decimal(18,4)"})
+
+    bundle = build_artifacts(replace(analysis, request=request))
+
+    assert "TRY_CONVERT(DECIMAL(18,4), customer_id)" in bundle.validation_queries_sql
