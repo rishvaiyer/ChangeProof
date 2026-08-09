@@ -19,6 +19,7 @@ dependencies = [
   "openai",
   "pydantic",
   "pydantic-settings",
+  "pypdf",
   "reportlab",
   "sqlglot",
   "typer",
