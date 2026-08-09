@@ -21,7 +21,7 @@ def test_dashboard_labels_demo_evidence() -> None:
 
     assert response.status_code == 200
     assert "ChangeProof" in response.text
-    assert "Bundled SonicLedger demo metadata" in response.text
+    assert "Bundled AsterVale Living DataHub metadata" in response.text
     assert 'href="/static/styles.css"' in response.text
 
 
@@ -141,7 +141,7 @@ def test_provider_from_env_rejects_unknown_mode(monkeypatch) -> None:
 
 
 def test_dashboard_shows_writeback_drafts_and_the_approval_gate() -> None:
-    response = client.get("/")
+    response = client.get("/datahub")
 
     assert response.status_code == 200
     assert "Draft changes for DataHub" in response.text
@@ -213,7 +213,7 @@ def test_html_responses_are_not_marked_no_cache() -> None:
 def test_simulated_mode_labels_the_flow_and_completes_it(monkeypatch) -> None:
     monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
 
-    page = client.get("/")
+    page = client.get("/datahub")
     assert "SIMULATED" in page.text
     assert "No DataHub is connected" in page.text
 

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dependency Intelligence{% endblock %}
+{% block breadcrumb %}Impact graph{% endblock %}
+{% block content %}
+<section class="page-heading heading-row">
+  <div><span class="kicker"><i></i>OBSERVED + DISCOVERED DEPENDENCIES</span><h1>Dependency Intelligence</h1><p>One view for DataHub lineage and the SQL consumers that catalog graphs cannot always observe.</p></div>
+  {% if analysis %}<span class="source-pill">{{ analysis.source_label }}</span>{% endif %}
+</section>
+
+{% if analysis %}
+<section class="metric-grid">
+  <article class="metric-card metric-wide"><span class="metric-icon purple">◇</span><div><small>DATAHUB LINEAGE</small><strong>{{ analysis.impact.impacted_assets | length }} observed assets</strong><p>Column-level graph · maximum {{ analysis.impact.impacted_assets[-1].hop if analysis.impact.impacted_assets else 0 }} hops</p></div></article>
+  <article class="metric-card metric-wide"><span class="metric-icon blue">⌘</span><div><small>SQL SERVER MODULES</small><strong>{{ analysis.sql_dependencies | length }} hidden consumers</strong><p>Static scan · one manual review</p></div></article>
+  <article class="metric-card metric-wide"><span class="metric-icon green">✓</span><div><small>EVIDENCE CONFIDENCE</small><strong>{{ analysis.impact.confidence.value }}</strong><p>Bounded to observed metadata</p></div></article>
+</section>
+
+<section class="panel graph-panel">
+  <div class="panel-heading"><div><span class="section-index">01</span><h2>DataHub lineage</h2><p>{{ analysis.impact.impacted_assets | length }} observed assets connected to the proposed field.</p></div><span class="evidence-source">MCP EVIDENCE</span></div>
+  <div class="lineage-graph">
+    <article class="lineage-node source-node"><span>SOURCE</span><i></i><strong>{{ analysis.source_table }}</strong><small>{{ analysis.source_owner }}</small></article>
+    {% for asset in analysis.impact.impacted_assets %}
+      <div class="edge"><span>H{{ asset.hop }}</span></div>
+      <article class="lineage-node{% if asset.critical %} critical-node{% endif %}"><span>{% if asset.critical %}CRITICAL{% else %}DATASET{% endif %}</span><i></i><strong>{{ asset.name }}</strong><small>{{ asset.owners[0] if asset.owners else "unowned" }}</small></article>
+    {% endfor %}
+    {% if not analysis.impact.impacted_assets %}
+      <div class="edge"><span>?</span></div>
+      <article class="lineage-node empty-node"><span>NONE OBSERVED</span><i></i><strong>No downstream consumers</strong><small>Absence of observed lineage is not proof that no consumer exists.</small></article>
+    {% endif %}
+  </div>
+  {% if analysis.impact.reasons %}<div class="reason-row">{% for reason in analysis.impact.reasons %}<span>✓ {{ reason }}</span>{% endfor %}</div>{% endif %}
+</section>
+
+<section class="panel sql-panel">
+  <div class="panel-heading"><div><span class="section-index">02</span><h2>Hidden SQL consumers</h2><p>Read-only inspection of <code>sys.sql_modules</code> catches code-level dependencies beyond DataHub lineage.</p></div><a class="button button-secondary" href="/artifacts/discovery-query.sql">Download discovery query</a></div>
+  {% if analysis.sql_dependencies %}
+  <div class="sql-table" role="table" aria-label="Hidden SQL dependencies">
+    <div class="sql-row sql-header" role="row"><span>Object</span><span>Match</span><span>Regions</span><span>Confidence</span><span>Status</span></div>
+    {% for item in analysis.sql_dependencies %}
+    <article class="sql-row" role="row">
+      <span><i class="db-icon">DB</i><strong>{{ item.schema_name }}.{{ item.object_name }}</strong><small>{{ item.object_type }}</small></span>
+      <span><code>{{ item.match_kind.value | upper }}</code></span>
+      <span>{% if item.regions %}{{ item.regions | join(", ") }}{% else %}<em>UNKNOWN</em>{% endif %}</span>
+      <span><b class="confidence confidence-{{ item.confidence.value | lower }}">{{ item.confidence.value }}</b></span>
+      <span>{% if item.manual_review_reason %}<b class="review-status">MANUAL REVIEW</b>{% else %}<b class="fix-status">FIX GENERATED</b>{% endif %}</span>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}<div class="empty-state"><strong>No hidden SQL matches in this synthetic scenario</strong><p>Run the downloadable query against the target SQL Server to inspect its real modules.</p></div>{% endif %}
+</section>
+
+<section class="plan-preview"><span class="section-index">03</span><div><small>PROPOSED SAFE ROLLOUT</small><h2>Proposed safe rollout</h2><p>{{ analysis.plan.summary }}</p></div><code>{{ analysis.plan.strategy }}</code></section>
+
+<section class="next-step-card"><div><span>Next</span><h2>See who must coordinate the change.</h2><p>Regional metadata turns dependency findings into an owner-ready release map.</p></div><a class="button button-primary" href="/regions">Open regional exposure →</a></section>
+{% endif %}
+{% endblock %}

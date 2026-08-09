@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Release Control{% endblock %}
+{% block breadcrumb %}Rollout{% endblock %}
+{% block content %}
+<section class="page-heading heading-row">
+  <div><span class="kicker"><i></i>DEPENDENCY-ORDERED DELIVERY</span><h1>Release Control</h1><p>A safe migration sequence with explicit owners, validation gates, and rollback preserved until cutover.</p></div>
+  {% if analysis %}<span class="strategy-chip">{{ analysis.plan.strategy }}</span>{% endif %}
+</section>
+
+{% if analysis %}
+<section class="readiness-banner"><div><span class="readiness-score">87</span><div><small>RELEASE READINESS</small><h2>Ready for coordinated review</h2><p>Technical fixes are generated. Dynamic SQL and regional approvals remain open.</p></div></div><div class="readiness-items"><span><i class="done"></i>Lineage traced</span><span><i class="done"></i>Fixes generated</span><span><i class="open"></i>Owner approvals</span></div></section>
+
+<section class="rollout-layout">
+  <article class="panel timeline-panel">
+    <div class="panel-heading"><div><span class="section-index">01</span><h2>Proposed safe rollout</h2><p>{{ analysis.plan.summary }}</p></div><span class="safe-badge">{{ analysis.plan.rollout_steps | length }} STAGES</span></div>
+    <ol class="release-timeline">
+      {% for step in analysis.plan.rollout_steps %}
+      <li><span>{{ "%02d" | format(loop.index) }}</span><div><small>{% if loop.first %}PREPARE{% elif loop.last %}CUTOVER{% else %}MIGRATE{% endif %}</small><strong>{{ step }}</strong><p>{% if loop.first %}Keep the original contract available and make rollback immediate.{% elif loop.last %}Complete only after owners and validation gates pass.{% else %}Move consumers in observed dependency order and monitor regional impact.{% endif %}</p></div><b>{% if loop.first %}READY{% else %}PLANNED{% endif %}</b></li>
+      {% endfor %}
+    </ol>
+  </article>
+
+  <aside class="rollout-sidebar">
+    <article class="panel gate-card"><span class="section-index">02</span><h3>Validation gates</h3><ul><li><i>✓</i><span><strong>Conversion coverage</strong><small>Zero invalid BIGINT conversions</small></span></li><li><i>✓</i><span><strong>dbt contracts</strong><small>Compile and schema tests pass</small></span></li><li><i>✓</i><span><strong>Regional owners</strong><small>High-risk teams acknowledge</small></span></li><li><i>✓</i><span><strong>SQL review</strong><small>Dynamic module manually inspected</small></span></li></ul><a class="button button-secondary" href="/artifacts/validation-queries.sql">Download validation SQL</a></article>
+    <article class="panel rollback-card"><span>↶</span><small>ROLLBACK GUARDRAIL</small><h3>Original contract stays live</h3><p>The <code>VARCHAR</code> field remains available until dependent owners confirm the <code>BIGINT</code> cutover.</p><a href="/artifacts/rollback.sql">Open rollback runbook →</a></article>
+  </aside>
+</section>
+
+<section class="next-step-card"><div><span>Publish decision</span><h2>Put the plan where data teams work.</h2><p>Draft the incident, critical tags, and migration notes back into DataHub.</p></div><a class="button button-primary" href="/datahub">Review DataHub actions →</a></section>
+{% endif %}
+{% endblock %}

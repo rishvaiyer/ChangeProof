@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Fix Studio{% endblock %}
+{% block breadcrumb %}Fix studio{% endblock %}
+{% block content %}
+<section class="page-heading heading-row">
+  <div><span class="kicker"><i></i>REVIEWABLE REMEDIATION</span><h1>Fix Studio</h1><p>Generated SQL drafts, validation gates, rollback controls, and machine-readable evidence in one workspace.</p></div>
+  <span class="environment-chip"><i></i>NO AUTO-EXECUTION</span>
+</section>
+
+{% if analysis and analysis.artifacts %}
+<section class="artifact-strip">
+  <a href="/artifacts/impact-report.json"><span class="file-icon json">{ }</span><div><strong>Impact report</strong><small>JSON · full evidence</small></div><b>↓</b></a>
+  <a href="/artifacts/discovery-query.sql"><span class="file-icon sql">SQL</span><div><strong>Discovery query</strong><small>SQL Server · read only</small></div><b>↓</b></a>
+  <a href="/artifacts/proposed-fixes.sql"><span class="file-icon fix">✦</span><div><strong>Proposed fixes</strong><small>SQL · review draft</small></div><b>↓</b></a>
+  <a href="/artifacts/changeproof.sarif"><span class="file-icon sarif">S</span><div><strong>SARIF results</strong><small>CI compatible</small></div><b>↓</b></a>
+</section>
+
+<section class="fix-grid">
+  <article class="panel fix-list-panel">
+    <div class="panel-heading"><div><span class="section-index">01</span><h2>Generated SQL fixes</h2><p>{{ analysis.sql_dependencies | length }} references classified, {{ analysis.sql_dependencies | rejectattr("proposed_sql", "none") | list | length }} reviewable drafts.</p></div><span class="safe-badge">HUMAN APPROVAL</span></div>
+    <div class="fix-tabs"><span class="active">All findings</span><span>Generated</span><span>Manual review</span></div>
+    {% for item in analysis.sql_dependencies %}
+    <article class="fix-card{% if item.manual_review_reason %} fix-manual{% endif %}">
+      <header><div><span class="db-icon">DB</span><div><strong>{{ item.schema_name }}.{{ item.object_name }}</strong><small>{{ item.object_type }} · {{ item.match_kind.value | upper }}</small></div></div>{% if item.manual_review_reason %}<b class="review-status">MANUAL REVIEW</b>{% else %}<b class="fix-status">FIX GENERATED</b>{% endif %}</header>
+      <div class="code-compare">
+        <div><span>CURRENT REFERENCE</span><pre><code>{{ item.snippet }}</code></pre></div>
+        <div><span>PROPOSED CHANGE</span><pre><code>{{ item.proposed_sql if item.proposed_sql else item.manual_review_reason }}</code></pre></div>
+      </div>
+      <footer><span>Confidence · <b>{{ item.confidence.value }}</b></span><span>Regions · {{ item.regions | join(", ") if item.regions else "UNKNOWN" }}</span></footer>
+    </article>
+    {% endfor %}
+  </article>
+
+  <aside class="fix-sidebar">
+    <article class="panel ai-card">
+      <span class="sparkle">✦</span><small>OPTIONAL AI REVIEW</small><h2>Second-pass migration review</h2><p>Ask OpenAI to explain the deterministic evidence and surface unresolved risks. It cannot change scores or execute SQL.</p>
+      {% if analysis.ai_review %}<div class="ai-result"><strong>{{ analysis.ai_review.status }}</strong><p>{{ analysis.ai_review.summary }}</p></div>{% elif ai_error %}<div class="alert alert-error"><span>{{ ai_error }}</span></div>{% else %}<form action="/ai-review" method="post"><button class="button button-dark" type="submit">Run AI review <span>✦</span></button></form>{% endif %}
+      <small class="cost-note">Runs only when clicked · uses Railway OPENAI_API_KEY</small>
+    </article>
+    <article class="panel control-card"><span class="section-index">02</span><h3>Release controls</h3><a href="/artifacts/validation-queries.sql"><span>✓</span><div><strong>Validation queries</strong><small>Conversion + null checks</small></div><b>↓</b></a><a href="/artifacts/rollback.sql"><span>↶</span><div><strong>Rollback runbook</strong><small>Reverse dependency order</small></div><b>↓</b></a><a href="/rollout"><span>↗</span><div><strong>Release sequence</strong><small>Owner-gated rollout</small></div><b>→</b></a></article>
+  </aside>
+</section>
+{% endif %}
+{% endblock %}

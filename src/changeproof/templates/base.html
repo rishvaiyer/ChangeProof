@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChangeProof predicts enterprise data change impact with DataHub evidence.">
+    <title>{% block title %}ChangeProof{% endblock %} · Enterprise Impact Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap">
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="ChangeProof home">
+          <span class="brand-mark"><i></i><i></i><i></i></span>
+          <span><strong>ChangeProof</strong><small>Impact intelligence</small></span>
+        </a>
+
+        <div class="workspace-card">
+          <span class="workspace-icon">AV</span>
+          <span><small>Enterprise workspace</small><strong>{{ analysis.company_name if analysis else "AsterVale Living" }}</strong></span>
+          <i class="live-dot" title="Demo active"></i>
+        </div>
+
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <p>Workspace</p>
+          <a href="/"{% if page == "analyze" %} class="active" aria-current="page"{% endif %}><span>⌁</span>Analyze</a>
+          <a href="/impact"{% if page == "impact" %} class="active" aria-current="page"{% endif %}><span>⌘</span>Impact graph</a>
+          <a href="/regions"{% if page == "regions" %} class="active" aria-current="page"{% endif %}><span>◎</span>Regions</a>
+          <a href="/fixes"{% if page == "fixes" %} class="active" aria-current="page"{% endif %}><span>✦</span>Fix studio</a>
+          <a href="/rollout"{% if page == "rollout" %} class="active" aria-current="page"{% endif %}><span>↗</span>Rollout</a>
+          <p>Catalog</p>
+          <a href="/datahub"{% if page == "datahub" %} class="active" aria-current="page"{% endif %}><span>◇</span>DataHub actions</a>
+        </nav>
+
+        <div class="sidebar-status">
+          <span class="status-orb"></span>
+          <div><strong>Evidence online</strong><small>Deterministic demo</small></div>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="breadcrumb"><span>AsterVale</span><b>/</b>{% block breadcrumb %}Change intelligence{% endblock %}</div>
+          <div class="topbar-actions">
+            <span class="evidence-badge"><i></i>{{ analysis.evidence_source if analysis else "Evidence unavailable" }}</span>
+            <a class="avatar" href="/datahub" aria-label="Open DataHub actions">RI</a>
+          </div>
+        </header>
+
+        <div class="page-wrap">
+          {% if error %}<div class="alert alert-error" role="alert"><strong>Analysis unavailable</strong><span>{{ error }}</span></div>{% endif %}
+          {% block content %}{% endblock %}
+          <footer>
+            <span><strong>ChangeProof</strong> · Apache-2.0</span>
+            <span>DataHub evidence + deterministic remediation · Synthetic enterprise data</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

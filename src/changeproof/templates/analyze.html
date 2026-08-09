@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Change Command Center{% endblock %}
+{% block breadcrumb %}Analyze{% endblock %}
+{% block content %}
+<section class="page-heading heading-row">
+  <div>
+    <span class="kicker"><i></i>PRE-PRODUCTION CHANGE INTELLIGENCE</span>
+    <h1>Change Command Center</h1>
+    <p>See the lineage, hidden code, regional exposure, and safest rollout before a schema change reaches production.</p>
+  </div>
+  <span class="environment-chip"><i></i>PROD · 420 STORES</span>
+</section>
+
+{% if analysis %}
+<section class="hero-card">
+  <div class="hero-copy">
+    <span class="hero-label">Prepared enterprise change</span>
+    <h2>Convert customer identity<br><em>without breaking the business.</em></h2>
+    <p>AsterVale Living is migrating <code>{{ analysis.source_label }}</code> from <strong>{{ analysis.request.old_type }}</strong> to <strong>{{ analysis.request.new_type }}</strong>. ChangeProof combines DataHub’s graph with stored-procedure discovery to expose what ordinary lineage misses.</p>
+    <div class="hero-actions">
+      <a class="button button-primary" href="/impact">Explore impact <span>→</span></a>
+      <a class="button button-ghost" href="/fixes">Open generated fixes</a>
+    </div>
+  </div>
+  <div class="signal-visual" aria-label="Impact confidence 87 percent">
+    <div class="signal-ring"><span><strong>87</strong><small>READINESS</small></span></div>
+    <div class="signal-legend"><span><i class="violet"></i>DataHub lineage</span><span><i class="cyan"></i>SQL discovery</span><span><i class="coral"></i>Regional policy</span></div>
+  </div>
+</section>
+
+<section class="metric-grid metric-grid-five" aria-label="Change summary">
+  <article class="metric-card"><span class="metric-icon purple">◇</span><div><small>DATAHUB ASSETS</small><strong>{{ analysis.impact.impacted_assets | length }}</strong><p>Observed downstream</p></div></article>
+  <article class="metric-card"><span class="metric-icon blue">⌘</span><div><small>HIDDEN SQL</small><strong>{{ analysis.sql_dependencies | length }}</strong><p>Modules discovered</p></div></article>
+  <article class="metric-card"><span class="metric-icon pink">◎</span><div><small>REGIONS</small><strong>{{ analysis.region_exposures | length }}</strong><p>Exposure groups</p></div></article>
+  <article class="metric-card"><span class="metric-icon amber">!</span><div><small>CRITICAL</small><strong>{{ analysis.impact.critical_assets | length }}</strong><p>Assets need review</p></div></article>
+  <article class="metric-card"><span class="metric-icon green">✓</span><div><small>CONFIDENCE</small><strong>{{ analysis.impact.confidence.value }}</strong><p>Observed graph</p></div></article>
+</section>
+{% endif %}
+
+<section class="panel analyzer-panel">
+  <div class="panel-heading">
+    <div><span class="section-index">01</span><h2>Test a schema change</h2><p>Choose a prepared scenario or enter a compatible catalog column.</p></div>
+    <span class="safe-badge">READ ONLY</span>
+  </div>
+  <form class="analysis-form" action="/analyze" method="post">
+    <label><span>Column</span><input name="column" value="{{ values.get('column', 'customer_id') }}" autocomplete="off" required></label>
+    <label><span>Current type</span><input name="old_type" value="{{ values.get('old_type', 'varchar') }}" autocomplete="off" required></label>
+    <span class="form-arrow" aria-hidden="true">→</span>
+    <label><span>Proposed type</span><input name="new_type" value="{{ values.get('new_type', 'bigint') }}" autocomplete="off" required></label>
+    <button class="button button-primary" type="submit">Analyze impact <span>↗</span></button>
+  </form>
+
+  {% if catalog %}
+  <div class="scenario-grid">
+    {% for entry in catalog %}
+    <form action="/analyze" method="post" class="scenario-form">
+      <input type="hidden" name="column" value="{{ entry.column }}">
+      <input type="hidden" name="old_type" value="{{ entry.old_type }}">
+      <input type="hidden" name="new_type" value="{{ entry.new_type }}">
+      <button class="scenario-card{% if entry.column == values.get('column') %} selected{% endif %}" type="submit">
+        <span class="scenario-top"><i></i>{{ entry.company_name }}</span>
+        <strong>{{ entry.source_table }}.{{ entry.column }}</strong>
+        <code>{{ entry.old_type }} → {{ entry.new_type }}</code>
+        <small>{{ entry.blurb }}</small>
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+{% if analysis %}
+<section class="insight-grid">
+  <article class="panel insight-card"><span class="insight-number">01</span><div><small>TRACE</small><h3>DataHub graph</h3><p>Column lineage, ownership, critical tags, and hop distance establish the observed blast radius.</p><a href="/impact">Open graph →</a></div></article>
+  <article class="panel insight-card"><span class="insight-number">02</span><div><small>DISCOVER</small><h3>Hidden procedures</h3><p>A read-only query searches SQL Server modules for casts, joins, predicates, and dynamic SQL.</p><a href="/impact">See SQL evidence →</a></div></article>
+  <article class="panel insight-card"><span class="insight-number">03</span><div><small>CONTROL</small><h3>Regional rollout</h3><p>Geography metadata turns one technical edit into owner-specific operational coordination.</p><a href="/regions">View regional risk →</a></div></article>
+</section>
+{% endif %}
+{% endblock %}
