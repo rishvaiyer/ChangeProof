@@ -331,8 +331,8 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
     @application.post("/triage", response_class=HTMLResponse)
     async def submit_triage(request: Request) -> HTMLResponse:
         try:
-            question, requirements_text, result, document_receipt = await triage_result_from_request(
-                request
+            question, requirements_text, result, document_receipt = (
+                await triage_result_from_request(request)
             )
         except (DocumentIngestError, ValueError) as exc:
             form = await request.form()
@@ -355,8 +355,8 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
     @application.post("/triage/ai-review", response_class=HTMLResponse)
     async def triage_ai_review(request: Request) -> HTMLResponse:
         try:
-            question, requirements_text, result, document_receipt = await triage_result_from_request(
-                request
+            question, requirements_text, result, document_receipt = (
+                await triage_result_from_request(request)
             )
         except (DocumentIngestError, ValueError) as exc:
             return render_triage(

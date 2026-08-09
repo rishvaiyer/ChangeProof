@@ -88,8 +88,12 @@ def _replace_rule(rule: object, context: DataHubAssetContext) -> object:
 
 def _context_step(index: int, rule: object, context: DataHubAssetContext) -> DataHubStep:
     asset_name = rule.asset_urn.rsplit(",", 2)[-2].removeprefix("astervale.").rstrip(")")
-    search_detail = f"; search matched {context.search_matches} assets" if context.search_matches else ""
-    query_detail = f"; query history returned {context.query_count} examples" if context.query_count else ""
+    search_detail = (
+        f"; search matched {context.search_matches} assets" if context.search_matches else ""
+    )
+    query_detail = (
+        f"; query history returned {context.query_count} examples" if context.query_count else ""
+    )
     return DataHubStep(
         index,
         f"DataHub MCP lookup #{index} · {asset_name}",

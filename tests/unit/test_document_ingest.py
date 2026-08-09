@@ -31,13 +31,27 @@ def _docx_bytes(text: str) -> bytes:
 @pytest.mark.parametrize(
     ("filename", "content", "expected"),
     [
-        ("requirements.txt", b"Compare invoices\nCheck settlements", "Compare invoices\nCheck settlements"),
+        (
+            "requirements.txt",
+            b"Compare invoices\nCheck settlements",
+            "Compare invoices\nCheck settlements",
+        ),
         ("requirements.md", b"# Rules\n- Compare invoices", "# Rules\n- Compare invoices"),
-        ("query.sql", b"SELECT * FROM finance.ar_transactions;", "SELECT * FROM finance.ar_transactions;"),
-        ("rules.csv", b"rule,domain\ncompare invoices,Finance", "rule,domain\ncompare invoices,Finance"),
+        (
+            "query.sql",
+            b"SELECT * FROM finance.ar_transactions;",
+            "SELECT * FROM finance.ar_transactions;",
+        ),
+        (
+            "rules.csv",
+            b"rule,domain\ncompare invoices,Finance",
+            "rule,domain\ncompare invoices,Finance",
+        ),
     ],
 )
-def test_extract_document_preserves_text_formats(filename: str, content: bytes, expected: str) -> None:
+def test_extract_document_preserves_text_formats(
+    filename: str, content: bytes, expected: str
+) -> None:
     document = extract_document(filename, content)
 
     assert document.filename == filename

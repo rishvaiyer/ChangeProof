@@ -12,7 +12,6 @@ from changeproof.document_ai import (
 )
 from changeproof.document_ingest import DocumentText
 
-
 DOCUMENT = DocumentText("incident.txt", "text/plain", "Compare invoices with settlements.", 36)
 
 
