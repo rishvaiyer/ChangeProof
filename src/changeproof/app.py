@@ -21,6 +21,14 @@ from .demo import DemoAnalysis, DemoInputError, catalog_options
 from .enterprise import analyze_enterprise_change
 from .exports import ARTIFACT_EXPORTS, ARTIFACT_FIELDS, all_results_text, artifact_text, pdf_bytes
 from .live import analyze_live_change
+from .triage import (
+    SAMPLE_INCIDENT_QUESTION,
+    SAMPLE_SRS_TEXT,
+    TriageResult,
+    build_triage_result,
+    triage_export_text,
+)
+from .triage_ai import AiTriageReview, TriageAiUnavailable, review_triage
 from .writeback import (
     WritebackUnavailableError,
     apply_approved,
@@ -37,6 +45,7 @@ PAGE_TEMPLATES = {
     "fixes": "fixes.html",
     "rollout": "rollout.html",
     "datahub": "datahub.html",
+    "triage": "triage.html",
 }
 
 templates = Jinja2Templates(directory=PACKAGE_DIR / "templates")
@@ -142,6 +151,49 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
             status_code=status_code,
         )
 
+    def render_triage(
+        request: Request,
+        *,
+        result: TriageResult,
+        question: str,
+        requirements_text: str,
+        ai_review: AiTriageReview | None = None,
+        ai_error: str | None = None,
+        error: str | None = None,
+        status_code: int = 200,
+    ) -> HTMLResponse:
+        mapped_rules = tuple(rule for rule in result.mappings if rule.status == "MAPPED")
+        return templates.TemplateResponse(
+            request=request,
+            name=PAGE_TEMPLATES["triage"],
+            context={
+                "analysis": None,
+                "page": "triage",
+                "nav_query": "",
+                "triage": result,
+                "question": question,
+                "requirements_text": requirements_text,
+                "sample_question": SAMPLE_INCIDENT_QUESTION,
+                "sample_requirements": SAMPLE_SRS_TEXT,
+                "mapped_rules": mapped_rules,
+                "has_mappings": bool(mapped_rules),
+                "coverage_percent": round(100 * len(mapped_rules) / len(result.rules))
+                if result.rules
+                else 0,
+                "ai_available": bool(os.getenv("OPENAI_API_KEY")),
+                "ai_review": ai_review,
+                "ai_error": ai_error,
+                "error": error,
+            },
+            status_code=status_code,
+        )
+
+    def triage_result_from_form(body: bytes) -> tuple[str, str, TriageResult]:
+        form = parse_qs(body.decode("utf-8"))
+        question = (form.get("question") or [""])[0]
+        requirements_text = (form.get("requirements_text") or [""])[0]
+        return question, requirements_text, build_triage_result(question, requirements_text)
+
     def default_page(request: Request, page: str) -> HTMLResponse:
         values = request_values(request)
         try:
@@ -187,6 +239,15 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
     def datahub(request: Request) -> HTMLResponse:
         return default_page(request, "datahub")
 
+    @application.get("/triage", response_class=HTMLResponse)
+    def triage(request: Request) -> HTMLResponse:
+        return render_triage(
+            request,
+            result=build_triage_result(SAMPLE_INCIDENT_QUESTION, SAMPLE_SRS_TEXT),
+            question=SAMPLE_INCIDENT_QUESTION,
+            requirements_text=SAMPLE_SRS_TEXT,
+        )
+
     @application.post("/analyze", response_class=HTMLResponse)
     async def analyze(request: Request) -> HTMLResponse:
         values = _form_values(await request.body())
@@ -211,6 +272,88 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 status_code=503,
             )
         return render_page(request, page="impact", analysis=analysis, values=values)
+
+    @application.post("/triage", response_class=HTMLResponse)
+    async def submit_triage(request: Request) -> HTMLResponse:
+        body = await request.body()
+        try:
+            question, requirements_text, result = triage_result_from_form(body)
+        except ValueError as exc:
+            form = parse_qs(body.decode("utf-8"))
+            return render_triage(
+                request,
+                result=build_triage_result("", ""),
+                question=(form.get("question") or [""])[0],
+                requirements_text=(form.get("requirements_text") or [""])[0],
+                error=str(exc),
+                status_code=422,
+            )
+        return render_triage(
+            request,
+            result=result,
+            question=question,
+            requirements_text=requirements_text,
+        )
+
+    @application.post("/triage/ai-review", response_class=HTMLResponse)
+    async def triage_ai_review(request: Request) -> HTMLResponse:
+        body = await request.body()
+        try:
+            question, requirements_text, result = triage_result_from_form(body)
+        except ValueError as exc:
+            return render_triage(
+                request,
+                result=build_triage_result("", ""),
+                question="",
+                requirements_text="",
+                error=str(exc),
+                status_code=422,
+            )
+        client_key = request.client.host if request.client else "unknown"
+        now = time.monotonic()
+        if now - ai_last_request.get(client_key, 0) < 15:
+            raise HTTPException(status_code=429, detail="AI review rate limit")
+        ai_last_request[client_key] = now
+        try:
+            review = await run_in_threadpool(review_triage, result)
+        except TriageAiUnavailable as exc:
+            return render_triage(
+                request,
+                result=result,
+                question=question,
+                requirements_text=requirements_text,
+                ai_error=str(exc),
+                status_code=503,
+            )
+        return render_triage(
+            request,
+            result=result,
+            question=question,
+            requirements_text=requirements_text,
+            ai_review=review,
+        )
+
+    @application.post("/triage/export/{export_format}")
+    async def export_triage(request: Request, export_format: str) -> Response:
+        if export_format not in {"sql", "txt", "pdf"}:
+            raise HTTPException(status_code=404, detail="Export format not found")
+        try:
+            _, _, result = triage_result_from_form(await request.body())
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        content = result.sql if export_format == "sql" else triage_export_text(result)
+        filename = f"contextIsKey-triage.{export_format}"
+        if export_format == "pdf":
+            return Response(
+                content=pdf_bytes("contextIsKey Triage Composer · Built on ChangeProof", content),
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            )
+        return Response(
+            content=content,
+            media_type="text/plain",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     @application.get("/artifacts/{artifact_name}")
     def artifact(request: Request, artifact_name: str) -> Response:

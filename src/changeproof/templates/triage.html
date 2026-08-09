@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}contextIsKey Triage Composer{% endblock %}
+{% block breadcrumb %}SRS triage composer{% endblock %}
+{% block content %}
+<section class="page-heading heading-row">
+  <div><span class="kicker"><i></i>contextIsKey · STATELESS INCIDENT INVESTIGATION</span><h1>Triage Composer</h1><p>Translate an SRS or incident brief into bounded DataHub-shaped mappings and reviewable SQL. Built on ChangeProof; nothing is uploaded, stored, or executed.</p></div>
+  <span class="environment-chip"><i></i>LOCAL TEXT ONLY</span>
+</section>
+
+<form class="panel triage-form" action="/triage" method="post">
+  <div class="panel-heading"><div><span class="section-index">01</span><h2>Describe the investigation</h2><p>Paste requirements or load a local text file into this browser form. The server receives only submitted fields.</p></div><button class="button button-secondary" type="button" data-load-example>Load example</button></div>
+  <div class="triage-input-grid">
+    <label><span>Incident question</span><input name="question" value="{{ question }}" maxlength="20000" required></label>
+    <label><span>Requirements text</span><textarea id="requirements-text" name="requirements_text" rows="9" maxlength="20000" required>{{ requirements_text }}</textarea></label>
+  </div>
+  <div class="file-row"><label class="file-picker"><span>Choose local text</span><input type="file" accept=".txt,.md,.sql,.csv,text/plain,text/markdown,text/csv,application/sql" data-triage-file><small>TXT, MD, SQL, or CSV; read only into the textarea</small></label><small>No multipart upload · no persistence</small></div>
+  <div class="triage-actions"><button class="button button-primary" type="submit" formaction="/triage">Build mappings <span>→</span></button>{% if has_mappings and ai_available %}<button class="button button-secondary" type="submit" formaction="/triage/ai-review">Run advisory AI review <span>✦</span></button><small class="ai-boundary">Extracted rule mappings—not the original file—are sent to OpenAI. Advisory output cannot change deterministic evidence.</small>{% endif %}{% if has_mappings %}<button class="button button-secondary" type="submit" formaction="/triage/export/sql">SQL ↓</button><button class="button button-secondary" type="submit" formaction="/triage/export/txt">TXT ↓</button><button class="button button-secondary" type="submit" formaction="/triage/export/pdf">PDF ↓</button>{% endif %}</div>
+</form>
+
+{% if error %}<div class="alert alert-error" role="alert"><strong>Triage unavailable</strong><span>{{ error }}</span></div>{% endif %}
+
+{% if triage.warnings %}<section class="triage-warnings" aria-label="Triage warnings"><div><strong>Mapping warnings</strong><span>Unmapped rules are retained for human follow-up; they cannot create a query or export control.</span></div>{% for warning in triage.warnings %}<p><b>!</b>{{ warning }}</p>{% endfor %}</section>{% endif %}
+
+{% if has_mappings %}
+<section class="triage-overview" aria-label="Computed triage overview">
+  <article class="panel coverage-card"><div class="coverage-ring" style="--coverage: {{ coverage_percent }}%"><div><strong>{{ coverage_percent }}%</strong><small>context coverage</small></div></div><div><span class="kicker"><i></i>COMPUTED COVERAGE</span><h2>{{ mapped_rules | length }} mapped rule{{ "s" if mapped_rules | length != 1 else "" }}</h2><p>{{ triage.rules | length }} extracted rule{{ "s" if triage.rules | length != 1 else "" }} were evaluated against the bounded catalog.</p></div></article>
+  <article class="panel triage-flow"><span class="kicker"><i></i>CROSS-DOMAIN QUERY FLOW</span><div class="flow-nodes">{% for domain in triage.domains %}<span>{{ domain }}</span>{% if not loop.last %}<b>→</b>{% endif %}{% endfor %}</div><p>Domains are shown in the order first selected by the computed mappings.</p></article>
+</section>
+
+<section class="triage-grid">
+  <article class="panel mapping-panel"><div class="panel-heading"><div><span class="section-index">02</span><h2>Extracted rule mappings</h2><p>Each rule is mapped to one bounded dataset, its fields, owner, and business term.</p></div><span class="safe-badge">DETERMINISTIC</span></div><div class="mapping-table" role="region" aria-label="Extracted rule mappings" tabindex="0"><div class="mapping-row mapping-head"><span>Rule</span><span>DataHub context</span><span>Evidence selected</span></div>{% for rule in triage.rules %}<div class="mapping-row"><span><b>{{ "%02d" | format(rule.number) }}</b><small>{{ rule.status }}</small><p>{{ rule.text }}</p></span><span>{% if rule.asset_urn %}<strong>{{ rule.asset_urn.rsplit(",", 2)[-2].removeprefix("astervale.") }}</strong><small>{{ rule.domain }} · {{ rule.owner }}</small>{% else %}<strong>Human mapping needed</strong><small>{{ rule.reason }}</small>{% endif %}</span><span>{% if rule.columns %}<code>{{ rule.columns | join(", ") }}</code><small>{{ rule.glossary }}</small>{% else %}<small>No generated query evidence</small>{% endif %}</span></div>{% endfor %}</div></article>
+  <aside class="triage-side-stack"><article class="panel domain-panel"><span class="section-index">03</span><h2>Domain coverage</h2><div class="domain-cards">{% for domain, rules in mapped_rules | groupby("domain") %}<div><strong>{{ domain }}</strong><small>{{ rules | length }} mapped rule{{ "s" if rules | length != 1 else "" }}</small></div>{% endfor %}</div></article><article class="panel explainers"><div><strong>Relevance</strong><span>Mapped assets and fields directly support the question.</span></div><div><strong>Reliability</strong><span>Evidence is deterministic, bounded, and reviewable.</span></div><div><strong>Retention</strong><span><b>Handoff-ready:</b> downloads and approval-gated write-back only, not persistent cross-incident memory.</span></div></article></aside>
+</section>
+
+<section class="panel evidence-timeline"><div class="panel-heading"><div><span class="section-index">04</span><h2>How DataHub helped</h2><p>Computed catalog touchpoints explain why the generated evidence is bounded.</p></div><span class="evidence-source">{{ triage.evidence_mode }}</span></div><ol>{% for step in triage.datahub_steps %}<li><span>{{ "%02d" | format(step.number) }}</span><div><strong>{{ step.operation }}</strong><p>{{ step.query_decision }}</p></div></li>{% endfor %}</ol></section>
+
+<section class="panel triage-sql"><div class="panel-heading"><div><span class="section-index">05</span><h2>Reviewable investigation SQL</h2><p>Generated from extracted mappings; it is a draft and was not executed.</p></div><span class="safe-badge">HUMAN REVIEW</span></div><pre><code>{{ triage.sql }}</code></pre></section>
+
+{% if ai_review or ai_error %}<section class="panel triage-ai-result"><span class="kicker"><i></i>ADVISORY AI REVIEW</span>{% if ai_review %}<h2>Second opinion, separate from deterministic evidence</h2><p>{{ ai_review.summary }}</p><p><strong>Plain-language explanation:</strong> {{ ai_review.explain_like_five }}</p>{% if ai_review.query_risks %}<h3>Query risks</h3><ul>{% for risk in ai_review.query_risks %}<li>{{ risk }}</li>{% endfor %}</ul>{% endif %}{% if ai_review.missing_questions %}<h3>Missing questions</h3><ul>{% for question in ai_review.missing_questions %}<li>{{ question }}</li>{% endfor %}</ul>{% endif %}{% else %}<div class="alert alert-error"><span>{{ ai_error }}</span></div>{% endif %}</section>{% endif %}
+{% endif %}
+
+<script>
+  const textArea = document.querySelector("#requirements-text");
+  const fileInput = document.querySelector("[data-triage-file]");
+  const exampleButton = document.querySelector("[data-load-example]");
+  const sampleQuestion = {{ sample_question | tojson }};
+  const sampleRequirements = {{ sample_requirements | tojson }};
+  fileInput?.addEventListener("change", () => { const file = fileInput.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { textArea.value = String(reader.result || ""); }; reader.readAsText(file); });
+  exampleButton?.addEventListener("click", () => { document.querySelector('[name="question"]').value = sampleQuestion; textArea.value = sampleRequirements; });
+</script>
+{% endblock %}

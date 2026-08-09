@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from changeproof.app import app, create_app
+from changeproof.triage import SAMPLE_INCIDENT_QUESTION, SAMPLE_SRS_TEXT
 
 client = TestClient(app)
 
@@ -18,6 +19,7 @@ client = TestClient(app)
         ("/fixes", "Fix Studio"),
         ("/rollout", "Release Control"),
         ("/datahub", "DataHub Actions"),
+        ("/triage", "Triage Composer"),
     ],
 )
 def test_enterprise_pages_share_navigation_and_context(path: str, heading: str) -> None:
@@ -28,8 +30,75 @@ def test_enterprise_pages_share_navigation_and_context(path: str, heading: str) 
     assert "AsterVale Living" in response.text
     assert "customer_id" in response.text
     assert 'aria-label="Primary navigation"' in response.text
-    for href in ("/", "/impact", "/regions", "/fixes", "/rollout", "/datahub"):
+    for href in ("/", "/impact", "/regions", "/fixes", "/rollout", "/datahub", "/triage"):
         assert f'href="{href}"' in response.text
+
+
+def test_triage_page_shows_sample_mapping_complex_sql_and_datahub_trail() -> None:
+    response = client.get("/triage")
+
+    assert response.status_code == 200
+    assert "Triage Composer" in response.text
+    assert "contextIsKey" in response.text
+    assert "Built on ChangeProof" in response.text
+    assert "How DataHub helped" in response.text
+    assert "finance.ar_transactions" in response.text
+    assert "running_balance" in response.text
+
+
+def test_triage_accepts_requirements_and_flags_unknown_rules() -> None:
+    response = client.post(
+        "/triage",
+        data={"question": "Investigate", "requirements_text": "Use lunar weather color."},
+    )
+
+    assert response.status_code == 200
+    assert "UNMAPPED" in response.text
+
+
+@pytest.mark.parametrize(
+    ("format", "content_type"),
+    [("sql", "text/plain"), ("txt", "text/plain"), ("pdf", "application/pdf")],
+)
+def test_triage_exports(format: str, content_type: str) -> None:
+    response = client.post(
+        f"/triage/export/{format}",
+        data={"question": SAMPLE_INCIDENT_QUESTION, "requirements_text": SAMPLE_SRS_TEXT},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith(content_type)
+    assert response.headers["content-disposition"] == (
+        f'attachment; filename="contextIsKey-triage.{format}"'
+    )
+
+
+def test_triage_without_mappings_hides_evidence_controls() -> None:
+    response = client.post(
+        "/triage",
+        data={"question": "Investigate", "requirements_text": "Use lunar weather color."},
+    )
+
+    assert response.status_code == 200
+    assert "Reviewable investigation SQL" not in response.text
+    assert 'formaction="/triage/export/sql"' not in response.text
+    assert 'formaction="/triage/ai-review"' not in response.text
+
+
+def test_triage_ai_review_discloses_it_receives_extracted_mappings(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-for-rendering")
+
+    response = client.get("/triage")
+
+    assert response.status_code == 200
+    assert 'formaction="/triage/ai-review"' in response.text
+    assert "Extracted rule mappings—not the original file—are sent to OpenAI." in response.text
+
+
+def test_triage_rejects_unknown_export_format_before_generation() -> None:
+    response = client.post("/triage/export/csv", data={"question": "x", "requirements_text": "x"})
+
+    assert response.status_code == 404
 
 
 def test_impact_page_shows_datahub_and_hidden_sql_evidence() -> None:
