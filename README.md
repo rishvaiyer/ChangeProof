@@ -18,6 +18,19 @@
 
 > **Demo note:** The public Railway demo uses deterministic synthetic DataHub-shaped context for speed and reliability. The repository also includes an opt-in integration verified against a local DataHub instance through the official MCP server. No fake cloud connection is claimed.
 
+## How DataHub powers contextIsKey
+
+DataHub is the governed context graph behind the product. It gives contextIsKey the meaning around a piece of data, not just the value stored in a row:
+
+- **Discovery:** find the datasets and columns that match an incident requirement.
+- **Schema:** confirm the field identity and neighboring fields before composing SQL.
+- **Entities:** retrieve owners, domains, glossary terms, criticality, and structured metadata.
+- **Lineage:** trace upstream and downstream dependencies across tables, columns, and dashboards.
+- **Query history:** surface real usage patterns, joins, filters, and aggregations that declared lineage may miss.
+- **Governance:** prepare incident, tag, and documentation changes behind human approval.
+
+The official DataHub MCP server is the read interface for the live path. contextIsKey adds the change-specific layer: it maps SRS rules to context, composes a chronological investigation, discovers hidden SQL consumers, translates impact into regions, and produces reviewable fixes. In the hosted demo, the same contract is backed by a deterministic synthetic context bundle so the behavior remains reproducible.
+
 ## The problem in one sentence
 
 An AI can write a plausible SQL query in seconds. It cannot safely change an enterprise identifier until it knows which columns, owners, dashboards, stored procedures, business rules, and regions depend on that identifier.
