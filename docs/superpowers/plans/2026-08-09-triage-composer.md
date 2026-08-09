@@ -114,9 +114,10 @@ def test_triage_exports(format, content_type):
 - [ ] **Step 4: Build the accessible page with local file reading, example loading, mapping table, domain summary, DataHub touchpoint cards, readable SQL, warnings, and SQL/TXT/PDF submit buttons.**
 - [ ] **Step 5: Add an explicit AI review button only when the key is available; state that extracted rule mappings are sent to OpenAI and render the review as advisory without changing deterministic evidence.**
 - [ ] **Step 6: Add a compact Relevance / Reliability / Retention explainer. Label Retention as handoff-ready through downloads and approval-gated write-back, not persistent cross-incident memory.**
-- [ ] **Step 7: Add responsive orange/blue/white styles with body and code text no smaller than 13px in primary result areas.**
-- [ ] **Step 8: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
-- [ ] **Step 9: Commit Task 3 files with `feat: add SRS triage composer experience`.**
+- [ ] **Step 7: Visualize computed result data with a context coverage ring, cross-domain query flow, DataHub evidence timeline, and domain coverage cards; do not add invented metrics.**
+- [ ] **Step 8: Add responsive orange/blue/white styles with body and code text no smaller than 13px in primary result areas.**
+- [ ] **Step 9: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
+- [ ] **Step 10: Commit Task 3 files with `feat: add SRS triage composer experience`.**
 
 ### Task 4: Judge narrative and full verification
 

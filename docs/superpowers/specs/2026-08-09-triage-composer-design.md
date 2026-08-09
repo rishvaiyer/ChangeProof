@@ -62,6 +62,7 @@ The sample query uses SQL Server syntax and includes independently readable CTEs
 - Keep body text at readable sizes and avoid oversized headings.
 - Explain each section in plain language with a short “Like I’m five” sentence.
 - Make the judge story visible without requiring a form submission.
+- Visualize real result data with a context coverage ring, a cross-domain query flow, a DataHub evidence timeline, and domain coverage cards. Do not introduce decorative or invented metrics.
 
 ## Success criteria
 
