@@ -137,15 +137,16 @@ def build_triage_result(question: str, requirements_text: str) -> TriageResult:
         for rule in rules
         if rule.status == "UNMAPPED"
     )
+    has_mapped_rules = bool(mapped)
     return TriageResult(
         rules=rules,
         mappings=rules,
-        datahub_steps=_datahub_steps(domains),
-        sql=_compose_sql(question),
-        validation_sql=_validation_sql(),
+        datahub_steps=_datahub_steps(domains) if has_mapped_rules else (),
+        sql=_compose_sql(question) if has_mapped_rules else "",
+        validation_sql=_validation_sql() if has_mapped_rules else "",
         warnings=warnings,
         domains=domains,
-        evidence_mode="Synthetic DataHub-shaped metadata; generated SQL requires review.",
+        evidence_mode="Bundled synthetic DataHub-shaped metadata; generated SQL requires review.",
     )
 
 
@@ -185,18 +186,22 @@ def _extract_rules(text: str) -> tuple[str, ...]:
         line = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", raw_line).strip()
         if line and not line.startswith("#"):
             rules.append(line)
-        if len(rules) == MAX_RULES:
-            break
+    if len(rules) > MAX_RULES:
+        raise ValueError(f"requirements text contains more than the maximum of {MAX_RULES} rules")
     return tuple(rules)
 
 
 def _map_rule(number: int, text: str) -> TriageRule:
     lowered = text.casefold()
-    matches = [
-        entry
-        for entry in CATALOG
-        if any(re.search(rf"\b{re.escape(keyword)}\b", lowered) for keyword in entry.keywords)
-    ]
+    matches = []
+    for catalog_index, entry in enumerate(CATALOG):
+        keywords = tuple(
+            keyword
+            for keyword in entry.keywords
+            if re.search(rf"\b{re.escape(keyword)}\b", lowered)
+        )
+        if keywords:
+            matches.append((entry, keywords, catalog_index))
     if not matches:
         return TriageRule(
             number,
@@ -204,7 +209,15 @@ def _map_rule(number: int, text: str) -> TriageRule:
             "UNMAPPED",
             reason="No bounded catalog keyword matched this rule.",
         )
-    entry = matches[0]
+    entry, _, _ = max(
+        matches,
+        key=lambda match: (
+            max(len(keyword) for keyword in match[1]),
+            sum(len(keyword) for keyword in match[1]),
+            len(match[1]),
+            -match[2],
+        ),
+    )
     return TriageRule(
         number,
         text,
@@ -254,6 +267,12 @@ WITH customer_scope AS (
     SELECT a.invoice_id AS event_id, a.customer_id, a.posted_at AS event_at, a.amount
     FROM finance.ar_transactions AS a
     JOIN customer_scope AS c ON c.customer_id = a.customer_id
+), order_comparison AS (
+    -- DataHub operation: compare commerce order totals to invoice debits separately.
+    SELECT o.order_id, o.customer_id, o.event_at AS ordered_at, o.amount AS order_total,
+           a.amount AS invoice_amount
+    FROM order_events AS o
+    LEFT JOIN invoice_events AS a ON a.customer_id = o.customer_id
 ), payment_events AS (
     -- DataHub operation: inspect payments.settlements schema and ownership.
     SELECT s.settlement_id AS event_id, a.customer_id, s.settled_at AS event_at,
@@ -273,12 +292,9 @@ WITH customer_scope AS (
     FROM fulfillment.shipments AS s
     JOIN commerce.orders AS o ON o.order_id = s.order_id
 ), normalized_events AS (
-    SELECT order_id AS event_id, customer_id, event_at, amount,
-           'ORDER' AS event_type FROM order_events
-    UNION ALL SELECT event_id, customer_id, event_at, amount, 'INVOICE' FROM invoice_events
+    SELECT event_id, customer_id, event_at, amount, 'INVOICE' FROM invoice_events
     UNION ALL SELECT event_id, customer_id, event_at, amount, 'PAYMENT' FROM payment_events
     UNION ALL SELECT event_id, customer_id, event_at, amount, 'REFUND' FROM return_refund_events
-    UNION ALL SELECT event_id, customer_id, event_at, amount, 'FULFILLMENT' FROM fulfillment_events
 ), running_balance AS (
     SELECT customer_id, event_id, event_type, event_at, amount,
            SUM(amount) OVER (PARTITION BY customer_id ORDER BY event_at, event_id
