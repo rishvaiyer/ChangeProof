@@ -15,7 +15,7 @@ client = TestClient(app)
 @pytest.mark.parametrize(
     ("path", "heading"),
     [
-        ("/", "Change Command Center"),
+        ("/", "Change intelligence"),
         ("/impact", "Dependency Intelligence"),
         ("/regions", "Regional Exposure"),
         ("/fixes", "Fix Studio"),
