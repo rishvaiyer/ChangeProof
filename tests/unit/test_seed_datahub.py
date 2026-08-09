@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 import sys
+from pathlib import Path
 
+import pytest
 from datahub.emitter.mce_builder import make_schema_field_urn
 from datahub.emitter.rest_emitter import EmitMode
-import pytest
 
 
 def _load_seed_datahub_module():
@@ -59,7 +59,9 @@ class _ReadbackGraph:
 
 
 def test_verify_emitted_urns_accepts_schema_field_readback_via_dataset_schema() -> None:
-    dataset_urn = "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.staging.stg_streams,PROD)"
+    dataset_urn = (
+        "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.staging.stg_streams,PROD)"
+    )
     graph = _ReadbackGraph(
         existing_urns={dataset_urn},
         schema_by_urn={
@@ -69,7 +71,11 @@ def test_verify_emitted_urns_accepts_schema_field_readback_via_dataset_schema() 
                 version=0,
                 hash="",
                 platformSchema=seed_datahub.SchemalessClass(),
-                fields=[seed_datahub.schema_field(dataset_urn, FieldSpec("artist_id", "varchar", "Artist identifier."))],
+                fields=[
+                    seed_datahub.schema_field(
+                        dataset_urn, FieldSpec("artist_id", "varchar", "Artist identifier.")
+                    )
+                ],
             )
         },
     )
@@ -83,10 +89,16 @@ def test_verify_emitted_urns_accepts_schema_field_readback_via_dataset_schema() 
     )
 
 
-def test_fetch_downstream_lineage_uses_supplied_dataset_urns_without_search(monkeypatch: pytest.MonkeyPatch) -> None:
-    source_urn = "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.staging.stg_streams,PROD)"
+def test_fetch_downstream_lineage_uses_supplied_dataset_urns_without_search(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_urn = (
+        "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.staging.stg_streams,PROD)"
+    )
     mid_urn = "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.marts.fct_royalties,PROD)"
-    target_urn = "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.marts.artist_payouts,PROD)"
+    target_urn = (
+        "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models.marts.artist_payouts,PROD)"
+    )
 
     graph = _ReadbackGraph(
         existing_urns={source_urn, mid_urn, target_urn},
@@ -97,7 +109,11 @@ def test_fetch_downstream_lineage_uses_supplied_dataset_urns_without_search(monk
                 version=0,
                 hash="",
                 platformSchema=seed_datahub.SchemalessClass(),
-                fields=[seed_datahub.schema_field(source_urn, FieldSpec("artist_id", "varchar", "Artist identifier."))],
+                fields=[
+                    seed_datahub.schema_field(
+                        source_urn, FieldSpec("artist_id", "varchar", "Artist identifier.")
+                    )
+                ],
             ),
             mid_urn: SchemaMetadataClass(
                 schemaName="fct_royalties",
@@ -105,7 +121,11 @@ def test_fetch_downstream_lineage_uses_supplied_dataset_urns_without_search(monk
                 version=0,
                 hash="",
                 platformSchema=seed_datahub.SchemalessClass(),
-                fields=[seed_datahub.schema_field(mid_urn, FieldSpec("artist_id", "varchar", "Artist identifier."))],
+                fields=[
+                    seed_datahub.schema_field(
+                        mid_urn, FieldSpec("artist_id", "varchar", "Artist identifier.")
+                    )
+                ],
             ),
             target_urn: SchemaMetadataClass(
                 schemaName="artist_payouts",
@@ -113,7 +133,11 @@ def test_fetch_downstream_lineage_uses_supplied_dataset_urns_without_search(monk
                 version=0,
                 hash="",
                 platformSchema=seed_datahub.SchemalessClass(),
-                fields=[seed_datahub.schema_field(target_urn, FieldSpec("artist_id", "varchar", "Artist identifier."))],
+                fields=[
+                    seed_datahub.schema_field(
+                        target_urn, FieldSpec("artist_id", "varchar", "Artist identifier.")
+                    )
+                ],
             ),
         },
     )
@@ -203,6 +227,8 @@ def test_emit_datasets_batches_schema_metadata_for_seed_fixture() -> None:
     assert emit_mode == EmitMode.SYNC_PRIMARY
     assert wait_timeout is None
     schema_aspects = [
-        proposal.aspect for proposal in proposals if isinstance(proposal.aspect, SchemaMetadataClass)
+        proposal.aspect
+        for proposal in proposals
+        if isinstance(proposal.aspect, SchemaMetadataClass)
     ]
     assert len(schema_aspects) == 1

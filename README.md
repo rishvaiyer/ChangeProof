@@ -2,183 +2,168 @@
 
 **Know what breaks before you ship a data contract change.**
 
-ChangeProof uses DataHub metadata to trace the observed downstream impact of a proposed schema change, score the evidence, and generate a staged remediation and rollback plan.
+ChangeProof turns DataHub metadata into an enterprise migration decision. It traces a proposed schema edit, discovers hidden SQL consumers, maps regional exposure, generates reviewable fixes, and drafts the decision back into DataHub behind human approval.
 
-[Live demo](https://changeproof-production.up.railway.app/) · [Draft implementation PR](https://github.com/rishvaiyer/ChangeProof/pull/1) · [Apache-2.0 license](LICENSE)
+[Existing public deployment](https://changeproof-production.up.railway.app/) · [Repository](https://github.com/rishvaiyer/ChangeProof) · [Apache-2.0 license](LICENSE)
 
-> The public Railway demo uses bundled SonicLedger metadata for reliability. The repository also includes an opt-in local integration path verified against live DataHub MCP lineage.
+> The AsterVale Enterprise Impact Center is implemented on the feature branch and must be deployed before the public URL reflects this README. Hosted mode uses deterministic synthetic metadata. The repository also includes an opt-in integration verified against a local DataHub instance.
 
-## The three-minute judge flow
+## Judge flow
 
-1. **Propose a change.** Change `stg_streams.artist_id` from `varchar` to `bigint`.
-2. **Trace the blast radius.** ChangeProof follows column-level lineage, ownership, critical tags, and hop distance through DataHub.
-3. **Ship a safer plan.** The engine recommends a parallel typed field, staged downstream migration, validation gates, and explicit rollback steps.
-4. **Write the decision back.** ChangeProof drafts a DataHub incident, critical-asset tags, and documentation, then stops. Approving a draft sends only that item to DataHub.
-
-Try the prepared scenario in the [live dashboard](https://changeproof-production.up.railway.app/):
+Use the prepared AsterVale Living scenario:
 
 ```text
-Column:        artist_id
+Column:        customer_id
 Current type: varchar
 Proposed type: bigint
 ```
 
-## Why this matters
+Then visit six focused workspaces:
 
-A one-line schema edit can quietly become a payout incident.
+1. **Analyze:** frame the proposed contract change and see the enterprise summary.
+2. **Impact graph:** combine DataHub lineage with hidden SQL Server module findings.
+3. **Regions:** map affected assets, stored procedures, owners, and review flags across Northeast, South, Midwest, West, and unknown metadata.
+4. **Fix Studio:** review generated SQL, validation queries, rollback controls, JSON, and SARIF artifacts.
+5. **Rollout:** follow a dependency-ordered migration with explicit gates.
+6. **DataHub actions:** approve individual incident, tag, and documentation drafts.
 
-In the SonicLedger demo, `artist_id` flows through the royalty pipeline:
+## Enterprise scenario
+
+AsterVale Living is a fictional national home-furnishings retailer with 420 stores and six regional distribution centers. All company, customer, procedure, and regional data is synthetic.
+
+The proposed edit is:
 
 ```text
-stg_streams.artist_id
-  -> fct_royalties
-  -> artist_payouts [critical]
-  -> finance_royalty_dashboard [critical]
+stg_orders.customer_id: varchar -> bigint
 ```
 
-Changing the field in place can break royalty calculations, artist payouts, and finance reporting. ChangeProof does not pretend to know hidden consumers. It reasons over the graph DataHub actually observed and lowers confidence when that evidence is incomplete.
+DataHub evidence exposes this downstream chain:
 
-## How it works
-
-```mermaid
-flowchart LR
-    A["SonicLedger seed data"] --> B["dbt + DuckDB models"]
-    B --> C["DataHub schemas and lineage"]
-    C --> D["Official DataHub MCP server"]
-    D --> E["ChangeProof impact engine"]
-    E --> F["FastAPI dashboard"]
-    E --> G["Safe rollout and rollback plan"]
+```text
+stg_orders.customer_id
+  -> fct_order_sales
+  -> loyalty_customer_value [critical]
+  -> regional_returns
+  -> executive_revenue_dashboard [critical]
 ```
 
-ChangeProof keeps three responsibilities separate:
+ChangeProof also searches SQL Server module definitions and finds four code-level consumers, including `CONVERT`, `CAST`, join logic, and dynamic SQL. Static expressions receive reviewable drafts. Dynamic SQL is marked for manual review.
 
-1. **Evidence collection** reads schema fields and bounded downstream lineage through the official DataHub MCP server.
-2. **Impact assessment** scores the freshness and completeness of observed metadata, identifies critical assets, and gathers required reviewers.
-3. **Remediation planning** turns the change shape and observed impact into ordered rollout, validation, and rollback actions.
+## What DataHub contributes
 
-## DataHub integration depth
+DataHub is the operational evidence graph, not a normal application database:
 
-The project consumes DataHub as an operational decision graph, not just a catalog screen:
-
-- Column-level downstream lineage
+- Column-level lineage and hop distance
 - Dataset and schema-field identity
 - Ownership metadata
 - Critical-asset tags
-- Lineage degree, bounded to three hops
-- Schema-field presence and metadata completeness
-- Official DataHub MCP tool contracts for schema and lineage reads
-- Draft-and-approve write-back of incidents, tags, and documentation
+- Metadata completeness and freshness
+- Business grouping that can be represented with domains
+- Regional context that can be represented with structured properties
+- Official MCP tool contracts for schema and lineage reads
+- GraphQL write-back for incidents, tags, and documentation
 
-The local fixture seeds a real dbt lineage chain into DataHub, including fine-grained `artist_id` propagation. ChangeProof then asks DataHub which observed consumers are exposed before recommending a rollout.
+ChangeProof adds the decision layer for a change that has not happened yet:
 
-## Example decision
+- Change-specific evidence scoring
+- Hidden SQL dependency discovery
+- Geographic blast-radius aggregation
+- Generated migration and validation artifacts
+- Dependency-ordered rollout and rollback
+- Explicit AI second-pass review
+- Human-approved DataHub write-back
 
-| Signal | Demo result |
-| --- | --- |
-| Confidence | `HIGH` |
-| Blast radius | 3 downstream assets |
-| Maximum depth | 3 hops |
-| Critical assets | 2 |
-| Strategy | `parallel_typed_field` |
+## Architecture
 
-The recommended plan keeps the original field available while a parallel `bigint` field is backfilled and validated. Downstream assets migrate in lineage order. The original contract remains the rollback path until owners confirm the cutover.
+```mermaid
+flowchart LR
+    A["Proposed schema change"] --> B["DataHub MCP evidence"]
+    A --> C["Read-only SQL module scan"]
+    B --> D["Deterministic impact engine"]
+    C --> D
+    D --> E["Regional exposure"]
+    D --> F["Fix and rollout artifacts"]
+    F --> G["Optional OpenAI review"]
+    D --> H["Approval-gated DataHub GraphQL write-back"]
+```
 
-## Two honest demo modes
+Core design boundaries:
 
-### Hosted demo
+- Hosted mode executes no database SQL.
+- Generated SQL never executes automatically.
+- AI runs only after the user clicks **Run AI review**.
+- AI cannot change risk scores, invent dependencies, or control write-back.
+- Approval requests carry proposal IDs only. Catalog content is rebuilt server-side.
+- Missing lineage, ownership, or region metadata stays visible as uncertainty.
 
-- Public at [changeproof-production.up.railway.app](https://changeproof-production.up.railway.app/)
-- Uses bundled SonicLedger metadata
-- Deterministic and credential-free
-- Designed as a reliable judge and recruiter walkthrough
+## Generated artifacts
 
-### Local live-DataHub demo
+The Fix Studio downloads six deterministic outputs:
 
-- Builds seeded test data and dbt models in DuckDB
-- Emits schemas, ownership, tags, table lineage, and fine-grained lineage to DataHub
-- Reads the resulting graph through the official DataHub MCP server
-- Runs the same impact and remediation engine used by the dashboard
+- `impact-report.json`
+- `discovery-query.sql`
+- `proposed-fixes.sql`
+- `validation-queries.sql`
+- `rollback.sql`
+- `changeproof.sarif`
 
-The hosted demo is not presented as a live DataHub connection. That distinction is intentional.
+## Run locally
 
-## Run it locally
-
-The application uses Python 3.12.
+Requires Python 3.12.
 
 ```bash
 uv sync --extra dev
-make demo-baseline
-uv run uvicorn changeproof.app:app --reload
+CHANGE_PROOF_WRITEBACK_MODE=simulated uv run uvicorn changeproof.app:app --reload
 ```
 
 Open [http://localhost:8000](http://localhost:8000).
 
-### Run the live DataHub path
+For the optional AI review:
 
-Docker Desktop should have enough memory available for DataHub Quickstart. The repository invokes the DataHub CLI through Python 3.11 for quickstart compatibility while the ChangeProof application remains on Python 3.12.
+```bash
+export OPENAI_API_KEY="your-key"
+```
 
-For the complete judge demo, run one command:
+The key alone makes no API request. A request occurs only after an explicit click.
+
+## Live DataHub path
 
 ```bash
 make live-demo
 ```
 
-This builds the synthetic SonicLedger DuckDB pipeline, starts and seeds DataHub, verifies the lineage through the official MCP server, and leaves the live-evidence dashboard running. Open ChangeProof at [http://localhost:8000](http://localhost:8000) and DataHub at [http://localhost:9002](http://localhost:9002). Use `artist_id / varchar / bigint`, then stop both services with:
+The current live integration:
 
-```bash
-make demo-stop
-```
+- Builds the synthetic SonicLedger dbt and DuckDB fixture
+- Emits schemas, owners, tags, table lineage, and fine-grained column lineage
+- Reads schema and lineage through the official DataHub MCP server
+- Uses the same deterministic impact and remediation engine
+- Applies approved write-back proposals through DataHub GraphQL
 
-The individual commands remain available for troubleshooting:
+The AsterVale regional properties are bundled synthetic evidence in hosted mode. They model the domains and structured properties an enterprise deployment would ingest. They are not presented as live DataHub Cloud data.
 
-```bash
-make datahub-up
-make datahub-seed
-CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context.py -q
-make datahub-down
-```
-
-The live test is opt-in so ordinary test runs do not require Docker or a running DataHub instance.
-
-## Verify the project
+## Verify
 
 ```bash
 uv run pytest -q
+uv run ruff check .
 ```
 
-Current verified result: **51 passed, 1 opt-in live test skipped**.
+The ordinary suite is credential-free. Live DataHub remains opt-in:
 
-The public deployment also exposes:
-
-- `GET /` for the dashboard
-- `POST /analyze` for the prepared schema-change analysis
-- `POST /writeback/apply` to apply approved draft write-backs
-- `GET /healthz` for Railway health verification
-
-## Project structure
-
-```text
-src/changeproof/    classifier, MCP adapter, impact scorer, planner, and web app
-demo/sonicledger/   dbt models, DuckDB profile, seed data, and data tests
-scripts/            DataHub lifecycle checks and metadata seeding
-tests/              unit, dbt integration, web, and opt-in live DataHub tests
+```bash
+CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context.py -q
 ```
 
 ## Current boundaries
 
-- Railway uses bundled metadata and is not connected to a hosted DataHub instance.
-- The public form demonstrates the prepared `artist_id` type-change scenario.
-- Remediation is deterministic; AI-generated review is not enabled yet.
-- Dynamic SQL and unobserved external consumers require explicit human review.
-- The hosted demo runs write-back in **simulated mode** (`CHANGE_PROOF_WRITEBACK_MODE=simulated`): approving records the entry in a local demo catalog and shows exactly what would be sent, labelled `SIMULATED` on screen. It performs no network call and never claims a DataHub write. The real GraphQL path is the default (`datahub`) and is what `make live-demo` exercises.
-
-These boundaries are visible because ChangeProof is meant to support data-engineering decisions, not manufacture confidence the metadata cannot justify.
-
-## Roadmap
-
-- Stored-procedure parameter, result-set, and dependency-change analysis
-- Bounded AI review that explains deterministic evidence without inventing dependencies
-- Hosted DataHub or DataHub Cloud connectivity for the public demo
+- The existing public deployment must be updated before it shows AsterVale.
+- Hosted evidence is deterministic and synthetic, not a live DataHub Cloud connection.
+- Hosted write-back is simulated and clearly labeled. It makes no network call.
+- The local live path is the verified DataHub MCP and GraphQL integration.
+- Static SQL discovery cannot guarantee complete dependency coverage.
+- Dynamic SQL and absent region metadata require manual review.
+- Regional flags are coordination signals, not legal-compliance determinations.
 
 ## License
 

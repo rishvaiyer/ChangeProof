@@ -72,3 +72,17 @@ def test_unknown_dynamic_sql_requires_review() -> None:
 
     assert unknown.risk is RegionRisk.REVIEW
     assert "REGION_METADATA_MISSING" in unknown.policy_flags
+
+
+def test_region_without_critical_customer_data_is_managed_exposure() -> None:
+    evidence = analyze_demo_change(
+        column="customer_id", old_type="varchar", new_type="bigint"
+    ).evidence
+
+    south = next(
+        item
+        for item in assess_regions(evidence, _dependencies(), ASTERVALE_ASSET_REGIONS)
+        if item.region == "SOUTH"
+    )
+
+    assert south.risk is RegionRisk.MEDIUM

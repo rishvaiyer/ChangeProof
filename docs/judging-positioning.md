@@ -1,135 +1,71 @@
-# ChangeProof — Positioning against the judging criteria
+# ChangeProof judging position
 
-Judge-facing arguments for the two criteria most likely to sink a DataHub
-submission. Written to be pasted into Devpost with light edits.
+## One sentence
 
-**Elevator pitch:** Know what breaks before you ship a data contract change.
+DataHub tells you what is connected today. ChangeProof tells you how to land a change that has not happened yet.
 
----
+## Use of DataHub
+
+- Reads schemas and bounded lineage through the official DataHub MCP server.
+- Uses fine-grained column identity, ownership, critical tags, freshness, and completeness as evidence.
+- Models enterprise business grouping with domains and geographic context with structured-property patterns.
+- Drafts operational incidents, pending-change tags, and migration documentation.
+- Applies only human-approved drafts through DataHub GraphQL.
+- Rebuilds approved content server-side so browser requests cannot inject catalog text.
+
+## Technical execution
+
+- Four focused deterministic engines: impact, SQL discovery, regions, and artifacts.
+- Six real dashboard pages with responsive desktop and mobile layouts.
+- Static SQL classification for convert, cast, joins, predicates, and dynamic SQL.
+- JSON, SQL, rollback, validation, and SARIF downloads.
+- Structured OpenAI review behind explicit user action.
+- Hosted simulation cannot make a network write.
+- Ordinary tests require no credentials.
 
 ## Originality
 
-> *"Submissions should clearly go beyond features DataHub already provides out of
-> the box. Building on top of, extending, or composing shipped features is
-> welcome; rebuilding them as if from scratch isn't."*
+ChangeProof does not rebuild DataHub search, catalog, ingestion, or lineage traversal.
 
-### The distinction that matters
+It adds capabilities tied to a hypothetical future edit:
 
-DataHub's impact analysis answers a question about the world **as it is**:
+- Change-specific evidence scoring
+- Hidden stored-procedure discovery
+- Regional blast radius and owner coordination
+- Generated migration artifacts
+- Dependency-ordered rollout and rollback
+- Approval-gated catalog decision write-back
 
-> *What is downstream of `stg_streams` today?*
+## Real-world usefulness
 
-ChangeProof answers a question about a world that **does not exist yet**:
+The output is a change-review package, not a chart:
 
-> *If I change `artist_id` from `varchar` to `bigint` tomorrow, what breaks, in
-> what order, and how do I land it without an incident?*
+1. Observed DataHub dependencies
+2. Hidden SQL references
+3. Regional owners and review flags
+4. Proposed static fixes
+5. Validation queries
+6. Rollback runbook
+7. DataHub incident, tag, and documentation drafts
 
-Lineage is the input, not the output. DataHub tells you what is connected.
-ChangeProof tells you what to **do about a change you have not made yet**.
+## Submission quality
 
-### What is composed vs. what is new
+- Fictional enterprise scenario with clear synthetic-data boundaries
+- Bright, focused UX with a coherent judge path
+- Honest hosted versus live integration labels
+- Under-three-minute demo script
+- Apache-2.0 license
+- Public repository and Railway deployment path
 
-| Layer | Source | Claim |
-|---|---|---|
-| Schemas, ownership, tags, table lineage, fine-grained column lineage | Read through the official DataHub MCP server | **Composed.** No traversal reimplemented. |
-| Hypothetical change simulation | ChangeProof | **New.** DataHub has no notion of a proposed, unapplied change. |
-| Evidence scoring across hop distance, ownership, critical tags | ChangeProof | **New.** DataHub exposes the signals; it does not weigh them against a specific edit. |
-| Staged remediation plan: parallel typed field, ordered downstream migration, validation gates, rollback steps | ChangeProof | **New.** This is an artifact DataHub does not produce. |
-| Writing the decision back as incidents, tags, and documentation | DataHub GraphQL mutations, behind a human approval gate | **Composed.** Standard DataHub write APIs. What is new is the draft-and-approve gate and the content ChangeProof puts in them. |
+## Strong demo line
 
-### The one-sentence version
-
-> ChangeProof does not visualize lineage or rebuild impact analysis. It reads
-> DataHub's lineage as evidence and returns a migration plan for a change that
-> has not happened yet.
-
-### Deliberately not rebuilt
-
-- No lineage graph UI. DataHub's is better and already shipped.
-- No metadata ingestion. The official MCP server is the read path.
-- No catalog, search, or discovery surface.
-
----
-
-## Real-World Usefulness
-
-> *"Would a real data, ML, or AI platform team see clear value in this?"*
-
-### The scenario, concretely
-
-A one-line schema edit becomes a payout incident. In the SonicLedger demo,
-`artist_id` flows through the royalty pipeline. Widening a type is the kind of
-change that reviews clean, passes CI, and breaks revenue reporting three hops
-downstream where nobody was looking.
-
-### Why teams cannot already answer this
-
-The information exists but is spread across lineage, ownership, and tags, and
-none of it is organized around a **proposed** change. In practice the answer
-comes from asking in Slack and hoping the person who knows still works there.
-
-### What a team actually receives
-
-Not a score or a dashboard. A **plan**:
-
-1. Add a parallel typed field
-2. Migrate downstream consumers in dependency order
-3. Validation gates between stages
-4. Explicit rollback steps
-
-That is the artifact a platform engineer needs in a change review, and it maps
-onto how migrations are really run.
-
-### Who feels the pain
-
-- **Data platform teams** owning contracts many teams depend on
-- **Analytics engineers** whose models break from upstream edits
-- **ML teams** whose features silently change type and skew a model
-
----
-
----
-
-## Beyond metadata reading
-
-> *"Depth of DataHub usage: does the submission go beyond basic metadata
-> reading?"*
-
-ChangeProof reads through the official MCP server and writes back through
-DataHub's GraphQL mutations. The write path is deliberately gated:
-
-1. Every analysis drafts its write-backs: an incident on the source dataset, a
-   `changeproof-pending-change` tag on each critical downstream asset, and the
-   migration plan as documentation.
-2. Nothing is sent until a human approves specific drafts.
-3. On approval the proposals are **rebuilt on the server** from the analysis.
-   The request carries proposal ids, never content, so an approval cannot push
-   arbitrary text into the catalog.
-4. The hosted demo runs this in simulated mode so the whole flow is clickable
-   without a DataHub behind it. Approving records the entry in a local demo
-   catalog and renders it under a `SIMULATED` label; it makes no network call
-   and never claims a DataHub write. Simulation must be opted into explicitly,
-   so a misconfigured deploy refuses rather than quietly pretending.
-
-The agent proposes. A human disposes. That gate is the point, not a limitation:
-an agent that can silently write to a company's metadata catalog is not one a
-platform team would install.
-
-## Proof
-
-- Repository: <https://github.com/rishvaiyer/ChangeProof>
-- Live demo: <https://changeproof-production.up.railway.app/>
-- Demo scenario: `stg_streams.artist_id`, `varchar` → `bigint`
-- Verified locally against live DataHub MCP lineage, opt-in path
+> The graph tells me what DataHub observed. The SQL scan tells me what the graph may miss. The regional view tells me who has to coordinate. The Fix Studio gives them something they can review and ship.
 
 ## Honest limits
 
-State these plainly; they cost nothing and they protect every other claim.
-
-- The hosted demo runs on bundled SonicLedger metadata for reliability.
-- The live DataHub integration runs locally and is opt-in.
-- Remediation plans are rule-derived. No AI-generated remediation is claimed.
-- The hosted demo is not connected to DataHub Cloud.
-- The hosted demo's write-back is simulated and labelled as such on screen. It
-  records to a local demo catalog, not to DataHub. The real GraphQL write path
-  runs under `make live-demo`.
+- Hosted evidence is bundled and synthetic.
+- Hosted write-back is simulated and labeled.
+- The local opt-in path is the real MCP and GraphQL integration.
+- Static discovery cannot prove complete dependency coverage.
+- Dynamic SQL and unknown geography require manual review.
+- AI explains deterministic evidence and never controls execution.

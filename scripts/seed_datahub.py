@@ -16,7 +16,7 @@ from datahub.emitter.mce_builder import (
 )
 from datahub.emitter.mcp import MetadataChangeProposalWrapper
 from datahub.emitter.rest_emitter import EmitMode
-from datahub.ingestion.graph.client import DataHubGraph, DatahubClientConfig
+from datahub.ingestion.graph.client import DatahubClientConfig, DataHubGraph
 from datahub.metadata.schema_classes import (
     CorpUserInfoClass,
     DatasetPropertiesClass,
@@ -27,8 +27,8 @@ from datahub.metadata.schema_classes import (
     OwnershipTypeClass,
     SchemaFieldClass,
     SchemaFieldDataTypeClass,
-    SchemaMetadataClass,
     SchemalessClass,
+    SchemaMetadataClass,
     StringTypeClass,
     TagAssociationClass,
     TagPropertiesClass,
@@ -37,7 +37,6 @@ from datahub.metadata.schema_classes import (
 )
 
 from changeproof.config import Settings
-
 
 ROOT = Path(__file__).resolve().parent.parent
 PROJECT_DIR = ROOT / "demo" / "sonicledger"
@@ -77,7 +76,11 @@ class DatasetSpec:
 FIELD_SPECS: dict[str, tuple[FieldSpec, ...]] = {
     "raw_dsp_streams": (
         FieldSpec("stream_id", "integer", "Unique stream event identifier."),
-        FieldSpec("artist_id", "varchar", "Stable artist identifier used across the SonicLedger lineage chain."),
+        FieldSpec(
+            "artist_id",
+            "varchar",
+            "Stable artist identifier used across the SonicLedger lineage chain.",
+        ),
         FieldSpec("track_id", "varchar", "Track identifier."),
         FieldSpec("territory_code", "varchar", "Market territory code."),
         FieldSpec("stream_count", "integer", "Paid stream count."),
@@ -85,7 +88,11 @@ FIELD_SPECS: dict[str, tuple[FieldSpec, ...]] = {
     ),
     "stg_streams": (
         FieldSpec("stream_id", "integer", "Unique stream event identifier."),
-        FieldSpec("artist_id", "varchar", "Stable artist identifier used across the SonicLedger lineage chain."),
+        FieldSpec(
+            "artist_id",
+            "varchar",
+            "Stable artist identifier used across the SonicLedger lineage chain.",
+        ),
         FieldSpec("track_id", "varchar", "Track identifier."),
         FieldSpec("territory_code", "varchar", "Market territory code."),
         FieldSpec("stream_count", "integer", "Paid stream count."),
@@ -94,7 +101,11 @@ FIELD_SPECS: dict[str, tuple[FieldSpec, ...]] = {
     ),
     "fct_royalties": (
         FieldSpec("stream_id", "integer", "Unique stream event identifier."),
-        FieldSpec("artist_id", "varchar", "Stable artist identifier used across the SonicLedger lineage chain."),
+        FieldSpec(
+            "artist_id",
+            "varchar",
+            "Stable artist identifier used across the SonicLedger lineage chain.",
+        ),
         FieldSpec("track_id", "varchar", "Track identifier."),
         FieldSpec("territory_code", "varchar", "Market territory code."),
         FieldSpec("stream_count", "integer", "Paid stream count."),
@@ -102,12 +113,20 @@ FIELD_SPECS: dict[str, tuple[FieldSpec, ...]] = {
         FieldSpec("royalty_amount", "decimal(12,4)", "Per-event royalty value."),
     ),
     "artist_payouts": (
-        FieldSpec("artist_id", "varchar", "Stable artist identifier used across the SonicLedger lineage chain."),
+        FieldSpec(
+            "artist_id",
+            "varchar",
+            "Stable artist identifier used across the SonicLedger lineage chain.",
+        ),
         FieldSpec("total_streams", "integer", "Total streams per artist."),
         FieldSpec("total_royalty_amount", "decimal(12,4)", "Total royalty amount per artist."),
     ),
     "finance_royalty_dashboard": (
-        FieldSpec("artist_id", "varchar", "Stable artist identifier used across the SonicLedger lineage chain."),
+        FieldSpec(
+            "artist_id",
+            "varchar",
+            "Stable artist identifier used across the SonicLedger lineage chain.",
+        ),
         FieldSpec("total_streams", "integer", "Total streams per artist."),
         FieldSpec("total_royalty_amount", "decimal(12,4)", "Total royalty amount per artist."),
         FieldSpec("payout_band", "varchar", "Finance payout priority band."),
@@ -190,7 +209,10 @@ def build_dataset_specs(manifest: dict[str, Any]) -> dict[str, DatasetSpec]:
         fields = FIELD_SPECS[model_name]
         upstreams = tuple(
             name_to_urn[upstream_name]
-            for upstream_name in [dependency.split(".")[-1] for dependency in node.get("depends_on", {}).get("nodes", [])]
+            for upstream_name in [
+                dependency.split(".")[-1]
+                for dependency in node.get("depends_on", {}).get("nodes", [])
+            ]
             if upstream_name in name_to_urn
         )
         description = node.get("description") or f"SonicLedger dataset {dataset_name}."
@@ -240,7 +262,9 @@ def build_reference_entity_proposals() -> tuple[list[MetadataChangeProposalWrapp
             tag_urn,
             TagPropertiesClass(
                 name=TAG_NAME,
-                description="Marks downstream SonicLedger assets that ChangeProof treats as critical.",
+                description=(
+                    "Marks downstream SonicLedger assets that ChangeProof treats as critical."
+                ),
             ),
         )
     )
@@ -271,14 +295,18 @@ def emit_reference_entities(graph: DataHubGraph) -> list[str]:
     return emitted
 
 
-def build_dataset_proposals(specs: dict[str, DatasetSpec]) -> tuple[list[MetadataChangeProposalWrapper], list[str]]:
+def build_dataset_proposals(
+    specs: dict[str, DatasetSpec],
+) -> tuple[list[MetadataChangeProposalWrapper], list[str]]:
     proposals: list[MetadataChangeProposalWrapper] = []
     emitted_urns: list[str] = []
     tag_urn = make_tag_urn(TAG_NAME)
     platform_urn = make_data_platform_urn(PLATFORM)
 
     for model_name, spec in specs.items():
-        proposals.append(build_aspect_proposal(spec.urn, DatasetPropertiesClass(description=spec.description)))
+        proposals.append(
+            build_aspect_proposal(spec.urn, DatasetPropertiesClass(description=spec.description))
+        )
         proposals.append(
             build_aspect_proposal(
                 spec.urn,
@@ -297,7 +325,9 @@ def build_dataset_proposals(specs: dict[str, DatasetSpec]) -> tuple[list[Metadat
                 spec.urn,
                 OwnershipClass(
                     owners=[
-                        OwnerClass(owner=make_user_urn(owner_email), type=OwnershipTypeClass.DATAOWNER)
+                        OwnerClass(
+                            owner=make_user_urn(owner_email), type=OwnershipTypeClass.DATAOWNER
+                        )
                         for owner_email in spec.owners
                     ]
                 ),
@@ -327,7 +357,10 @@ def build_dataset_proposals(specs: dict[str, DatasetSpec]) -> tuple[list[Metadat
             build_aspect_proposal(
                 spec.urn,
                 UpstreamLineageClass(
-                    upstreams=[UpstreamClass(dataset=upstream_urn, type="TRANSFORMED") for upstream_urn in spec.upstreams],
+                    upstreams=[
+                        UpstreamClass(dataset=upstream_urn, type="TRANSFORMED")
+                        for upstream_urn in spec.upstreams
+                    ],
                     fineGrainedLineages=fine_grained,
                 ),
             )
@@ -350,7 +383,7 @@ def schema_field_present(graph: DataHubGraph, schema_field_urn: str) -> bool:
     if not schema_field_urn.startswith(prefix) or not schema_field_urn.endswith(")"):
         return False
 
-    dataset_urn, field_path = schema_field_urn[len(prefix):-1].rsplit(",", 1)
+    dataset_urn, field_path = schema_field_urn[len(prefix) : -1].rsplit(",", 1)
     schema = graph.get_aspect(dataset_urn, SchemaMetadataClass)
     return schema is not None and any(field.fieldPath == field_path for field in schema.fields)
 
@@ -377,9 +410,7 @@ def urn_to_name(dataset_urn: str) -> str:
 
 def validate_expected_downstream_lineage(observed: list[str]) -> None:
     missing = [
-        dataset_name
-        for dataset_name in EXPECTED_DOWNSTREAM_LINEAGE
-        if dataset_name not in observed
+        dataset_name for dataset_name in EXPECTED_DOWNSTREAM_LINEAGE if dataset_name not in observed
     ]
     if missing:
         missing_text = ", ".join(missing)
@@ -410,12 +441,8 @@ def fetch_downstream_lineage(
                 query="sonicledger",
             )
         )
-    upstream_by_dataset = {
-        urn: graph.get_aspect(urn, UpstreamLineageClass) for urn in dataset_urns
-    }
-    schema_by_dataset = {
-        urn: graph.get_aspect(urn, SchemaMetadataClass) for urn in dataset_urns
-    }
+    upstream_by_dataset = {urn: graph.get_aspect(urn, UpstreamLineageClass) for urn in dataset_urns}
+    schema_by_dataset = {urn: graph.get_aspect(urn, SchemaMetadataClass) for urn in dataset_urns}
 
     seen = {dataset_urn}
     queue: deque[str] = deque([dataset_urn])
@@ -431,10 +458,14 @@ def fetch_downstream_lineage(
                 continue
 
             schema = schema_by_dataset.get(candidate_urn)
-            has_field = schema is not None and any(field.fieldPath == source_field for field in schema.fields)
+            has_field = schema is not None and any(
+                field.fieldPath == source_field for field in schema.fields
+            )
             has_field_lineage = any(
-                source_field_urn in fine.upstreams or any(
-                    downstream_field.endswith(f",{source_field})") for downstream_field in fine.downstreams
+                source_field_urn in fine.upstreams
+                or any(
+                    downstream_field.endswith(f",{source_field})")
+                    for downstream_field in fine.downstreams
                 )
                 for fine in lineage.fineGrainedLineages or []
             )

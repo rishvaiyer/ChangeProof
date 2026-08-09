@@ -1,186 +1,109 @@
-# ChangeProof — Devpost submission draft
+# ChangeProof Devpost draft
 
-Paste-ready copy for datahub.devpost.com. Every claim below is verified against
-the repository and the deployed demo as of 2026-08-08. Nothing here asserts a
-capability the code does not have.
+Use only after the AsterVale branch is deployed and the public URL is reverified.
 
----
+## Project
 
-## Project name
-
-ChangeProof
-
-## Elevator pitch
-
-Know what breaks before you ship a data contract change.
-
-## Category
-
-Agents That Do Real Work
-
-## Built with
-
-Python, FastAPI, Uvicorn, DataHub, DataHub MCP Server, dbt, DuckDB, Jinja2,
-pytest, Docker, Nixpacks, Railway
-
-## Try it out
-
-- Live demo: https://changeproof-production.up.railway.app/
-- Repository: https://github.com/rishvaiyer/ChangeProof
-- Demo scenario: column `artist_id`, current type `varchar`, proposed type `bigint`
-
----
-
-# About the project
+- **Name:** ChangeProof
+- **Pitch:** Know what breaks before you ship a data contract change.
+- **Category:** Agents That Do Real Work
+- **License:** Apache-2.0
+- **Built with:** DataHub, DataHub MCP, DataHub GraphQL, Python, FastAPI, Jinja2, dbt, DuckDB, OpenAI, Railway
 
 ## Inspiration
 
-A one-line schema edit becomes a payout incident.
+A one-line type change can become a national incident. The evidence needed to prevent it is often scattered across lineage, ownership, stored procedures, regional operations, and tribal knowledge.
 
-Widening a column type is the kind of change that reviews clean, passes CI, and
-then breaks revenue reporting three hops downstream where nobody was looking.
-The information needed to catch it already exists, but it is scattered across
-lineage, ownership, and tags, and none of it is organized around a change that
-has not happened yet. In practice the answer comes from asking in Slack and
-hoping the person who knows still works there.
-
-DataHub already knows what is connected. What it does not do is tell you what to
-do about an edit you are proposing tomorrow.
+DataHub knows what is connected today. ChangeProof asks a different question: if this contract changes tomorrow, what breaks, who is affected, and how should the team land it safely?
 
 ## What it does
 
-ChangeProof takes a proposed schema change and returns a staged migration plan.
+The demo models AsterVale Living, a fictional national retailer with 420 stores.
 
-Give it a column and a type change. It reads column-level lineage, ownership,
-critical-asset tags, and hop distance through the official DataHub MCP server,
-scores the observed blast radius, and produces an ordered rollout with
-validation gates and explicit rollback steps.
+The prepared change is `stg_orders.customer_id` from `varchar` to `bigint`.
 
-In the bundled SonicLedger demo, `artist_id` runs straight through the royalty
-pipeline:
+ChangeProof:
 
-```
-stg_streams.artist_id
-  -> fct_royalties
-  -> artist_payouts [critical]
-  -> finance_royalty_dashboard [critical]
-```
+1. Reads observed downstream lineage, ownership, critical tags, and field identity from DataHub evidence.
+2. Generates a read-only SQL Server discovery query for hidden stored procedures and views.
+3. Classifies `CONVERT`, `CAST`, join, predicate, and dynamic SQL references.
+4. Maps affected assets and SQL consumers to operating regions and owners.
+5. Produces proposed SQL, validation queries, rollback, JSON, and SARIF.
+6. Offers a bounded OpenAI review only after an explicit click.
+7. Drafts incidents, tags, and documentation for DataHub, then waits for item-level approval.
 
-Changing that field in place can break royalty calculations, artist payouts,
-and finance reporting. Analyzing `artist_id` from `varchar` to `bigint` returns:
+## Why DataHub matters
 
-| Signal | Result |
-| --- | --- |
-| Confidence | HIGH |
-| Blast radius | 3 downstream assets |
-| Maximum depth | 3 hops |
-| Critical assets | 2 |
-| Strategy | `parallel_typed_field` |
+ChangeProof uses DataHub as an operational graph:
 
-The recommended plan keeps the original field live while a parallel `bigint`
-field is backfilled and validated, migrates downstream assets in lineage order,
-and holds the original contract as the rollback path until owners confirm the
-cutover.
+- Official MCP schema and lineage reads
+- Fine-grained column lineage
+- Ownership and critical tags
+- Evidence completeness and freshness
+- Domain and structured-property patterns for business and geography metadata
+- GraphQL write-back for incidents, tags, and documentation
 
-What a team receives is not a score or another dashboard. It is the artifact a
-platform engineer actually needs in a change review.
+Lineage is an input, not the product. The product is the migration decision and its reviewable artifacts.
 
-Then ChangeProof offers to put that decision back into DataHub: an incident on
-the source dataset carrying the blast radius, a `changeproof-pending-change` tag
-on each critical downstream asset, and the migration plan as documentation. It
-drafts them and stops. Nothing is written until a human approves a specific
-draft, and on approval the content is rebuilt on the server from the analysis,
-so an approval can never carry arbitrary text into the catalog. The agent
-proposes; a human disposes.
+## Technical execution
 
-## How we built it
+- Deterministic impact, SQL, region, and artifact engines
+- Server-rendered six-page responsive dashboard
+- Six allowlisted downloadable artifacts
+- Explicit OpenAI Responses API call with structured Pydantic output
+- No AI call on page load
+- No automatic SQL execution
+- Approval requests contain IDs only, never arbitrary catalog text
+- Hosted simulation and real DataHub write modes are visibly distinct
+- Credential-free ordinary tests plus opt-in live DataHub verification
 
-Three responsibilities are kept deliberately separate:
+## Originality
 
-1. **Evidence collection** reads schema fields and bounded downstream lineage
-   through the official DataHub MCP server. No traversal is reimplemented.
-2. **Impact assessment** scores freshness and completeness of the observed
-   metadata, identifies critical assets, and gathers the owners who must review.
-3. **Remediation planning** turns the change shape and observed impact into
-   ordered rollout, validation, and rollback actions.
+DataHub answers what is connected now. ChangeProof simulates a proposed change and answers:
 
-The demo pipeline is real rather than mocked: dbt models over DuckDB generate a
-SonicLedger warehouse, which is emitted to DataHub with schemas, ownership,
-tags, table lineage, and fine-grained `artist_id` column propagation.
-ChangeProof then asks DataHub which observed consumers are exposed. `make
-live-demo` runs that entire path as one command and leaves the live-evidence
-dashboard running next to the DataHub UI.
+- What observed assets are exposed?
+- What hidden code also references the field?
+- Which regions and owners must coordinate?
+- What exact fixes, checks, rollout, and rollback should be reviewed?
 
-The web app is FastAPI with server-rendered Jinja templates, deployed to
-Railway via Nixpacks behind a `/healthz` check.
+It composes DataHub rather than rebuilding the catalog.
 
-## Challenges we ran into
+## Real-world usefulness
 
-The hardest problem was epistemic, not technical: deciding what the tool is
-allowed to claim.
+A platform engineer receives more than a risk score:
 
-Lineage is evidence of observed dependencies, not proof of every consumer.
-Dynamic SQL, ad-hoc queries, and external readers are invisible to it. It would
-have been easy to render a confident number and let a judge assume completeness.
-Instead ChangeProof scores the quality of its own evidence and lowers confidence
-when the metadata is incomplete, and the boundaries are printed in the README
-rather than buried.
+- An evidence-backed dependency graph
+- A hidden-code inventory
+- A regional coordination matrix
+- Proposed SQL changes
+- Validation and rollback scripts
+- A dependency-ordered rollout
+- DataHub drafts that preserve the decision for every downstream team
 
-The same discipline shaped the demo. The hosted deployment runs on bundled
-metadata so it is deterministic and credential-free, and the live DataHub
-integration is opt-in and local. Presenting the hosted demo as a live DataHub
-connection would have been the easier story and the false one.
+## Challenges
 
-## Accomplishments that we're proud of
+The hardest part was keeping confidence honest. Lineage cannot see every dynamic query or external reader. Static SQL scanning cannot resolve every runtime string. Region metadata can be absent.
 
-- The output is a plan, not a score. Parallel typed field, dependency-ordered
-  migration, validation gates, explicit rollback.
-- Write-back with a real approval gate. Proposals are rebuilt server-side on
-  approval, so the endpoint cannot be used to write arbitrary text into DataHub.
-- Column-level lineage end to end, from dbt models through DataHub to the
-  decision, including fine-grained `artist_id` propagation.
-- 64 passing tests covering the classifier, planner, impact scorer, MCP
-  adapter, write-back proposals and approval gate, dbt demo, and the web app,
-  plus an opt-in live DataHub integration test.
-- One-command reproducibility. `make live-demo` builds the warehouse, starts
-  and seeds DataHub, verifies lineage through the MCP server, and serves the
-  dashboard.
-- Claim boundaries stated in the README instead of hidden.
+ChangeProof exposes those limits. Dynamic SQL gets manual review. Missing geography becomes `UNKNOWN`. Hosted simulation never claims a real DataHub write.
 
-## What we learned
+## What is next
 
-Composing shipped features beats rebuilding them. The early temptation was a
-lineage graph UI, which DataHub already does better. Cutting it made the actual
-contribution obvious: DataHub answers what is connected today, ChangeProof
-answers what to do about a change that has not happened yet. Lineage became the
-input rather than the output.
+- Seed the full AsterVale regional metadata model into a hosted DataHub environment
+- Connect SQL discovery to approved read-only enterprise database credentials
+- Add CI annotations from the SARIF output
+- Add more database dialects and migration templates
 
-We also learned that stating limits makes the rest of the submission more
-credible, not less.
+## Required final links
 
-## What's next for ChangeProof
+- **Demo:** https://changeproof-production.up.railway.app/
+- **Repository:** https://github.com/rishvaiyer/ChangeProof
+- **Video:** add the verified public YouTube or Vimeo URL
 
-- Hosted DataHub or DataHub Cloud connectivity for the public demo
-- Stored-procedure parameter, result-set, and dependency-change analysis
-- Bounded AI review that explains the deterministic evidence without inventing
-  dependencies
+## Claim boundaries
 
----
-
-# Claim boundaries (keep these visible in the submission)
-
-- The hosted Railway demo uses bundled SonicLedger metadata for reliability.
-- The live DataHub integration runs locally and is opt-in.
-- Remediation plans are rule-derived. No AI-generated remediation is claimed.
-- The hosted demo is not connected to DataHub Cloud.
-- The hosted demo's write-back is **simulated and labelled `SIMULATED` on
-  screen**: approving records the entry in a local demo catalog and shows what
-  would be sent, with no network call and no claim of a DataHub write. The real
-  GraphQL write path runs under `make live-demo`. Say "simulated" when
-  describing the public demo; never imply it wrote to a real DataHub.
-
-# Notes before submitting
-
-- Leave video fields empty until a real public URL exists.
-- Do not mark the submission complete until Devpost confirms it.
-- Devpost registration must be completed first.
+- Hosted metadata is synthetic and deterministic.
+- Hosted write-back is simulated and labeled.
+- The local opt-in path is the real DataHub MCP and GraphQL integration.
+- Generated SQL is a review draft and is never auto-executed.
+- The AI reviewer explains deterministic evidence. It does not discover dependencies or assign risk.
+- Geographic flags are coordination prompts, not legal advice.

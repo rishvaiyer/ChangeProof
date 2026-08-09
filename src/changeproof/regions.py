@@ -33,7 +33,6 @@ ASTERVALE_ASSET_REGIONS: Mapping[str, AssetRegionMetadata] = {
         regions=("NORTHEAST", "SOUTH", "MIDWEST", "WEST"),
         owners=("finance-data@astervale.demo",),
         policy_flags=("EXECUTIVE_REPORTING",),
-        critical_customer_data=True,
     ),
 }
 
