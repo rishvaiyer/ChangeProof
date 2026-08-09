@@ -1,5 +1,7 @@
 import json
 import re
+import io
+import zipfile
 
 import pytest
 from fastapi.testclient import TestClient
@@ -49,9 +51,64 @@ def test_triage_page_shows_sample_mapping_complex_sql_and_datahub_trail() -> Non
     assert "7</strong><small>bounded lookups" in response.text
     assert "Bundled DataHub-shaped context" in response.text
     assert "CONNECT TO ACTIVATE" in response.text
-    assert "The file stays local" in response.text
-    assert 'accept=".txt,.md,.sql,.csv"' in response.text
+    assert "The file stays ephemeral" in response.text
+    assert 'accept=".pdf,.docx,.txt,.md,.sql,.csv"' in response.text
     assert 'role="status"' in response.text
+
+
+def _minimal_docx(text: str) -> bytes:
+    document_xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:body>
+</w:document>'''
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("word/document.xml", document_xml)
+    return buffer.getvalue()
+
+
+def test_triage_accepts_uploaded_txt_document_and_shows_receipt() -> None:
+    response = client.post(
+        "/triage",
+        data={"question": "Investigate accounts receivable", "requirements_text": ""},
+        files={"document": ("incident.txt", b"Compare invoice totals.", "text/plain")},
+    )
+
+    assert response.status_code == 200
+    assert "Document received" in response.text
+    assert "incident.txt" in response.text
+    assert "23 characters" in response.text
+    assert "finance.ar_transactions" in response.text
+
+
+def test_triage_accepts_uploaded_docx_document() -> None:
+    response = client.post(
+        "/triage",
+        data={"question": "Investigate settlements", "requirements_text": ""},
+        files={"document": ("incident.docx", _minimal_docx("Check payment settlement timing."))},
+    )
+
+    assert response.status_code == 200
+    assert "Document received" in response.text
+    assert "incident.docx" in response.text
+    assert "payments.settlements" in response.text
+
+
+@pytest.mark.parametrize(
+    ("filename", "content", "message"),
+    [("incident.exe", b"nope", "Supported document formats"), ("incident.txt", b"", "empty")],
+)
+def test_triage_rejects_invalid_uploaded_documents(
+    filename: str, content: bytes, message: str
+) -> None:
+    response = client.post(
+        "/triage",
+        data={"question": "Investigate", "requirements_text": ""},
+        files={"document": (filename, content)},
+    )
+
+    assert response.status_code == 422
+    assert message in response.text
 
 
 def test_triage_accepts_requirements_and_flags_unknown_rules() -> None:

@@ -412,6 +412,7 @@ input { font-size: 14px; }
 @media (max-width: 640px) { .primary-nav { gap: 2px; justify-content: flex-start; overflow-x: auto; }.primary-nav a { min-width: max-content; padding: 0 8px; font-size: 11px; }.primary-nav a span { font-size: 13px; } }
 
 .file-error { min-height: 1.25em; color: #b91c1c; font-size: 13px; font-weight: 700; }
+.document-receipt { display: grid; gap: 4px; margin-top: 16px; padding: 15px 17px; border: 1px solid #bbf7d0; border-radius: 13px; color: #166534; background: linear-gradient(120deg, #f0fdf4, #fff); }.document-receipt strong { font-size: 15px; }.document-receipt span, .document-receipt small { color: #42634a; font-size: 13px; line-height: 1.5; }.document-receipt input { display: none; }
 .context-graph-panel { margin-top: 20px; padding: 26px; }
 .context-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
 .context-metrics div { padding: 16px; border: 1px solid #dbeafe; border-radius: 14px; background: linear-gradient(145deg, #fff, #f8fbff); }

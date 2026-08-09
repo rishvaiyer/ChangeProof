@@ -15,9 +15,12 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import UploadFile
 
 from .ai_review import AiReviewUnavailable, review_analysis
 from .demo import DemoAnalysis, DemoInputError, catalog_options
+from .document_ai import DocumentAiUnavailable, DocumentInterpretation, interpret_document
+from .document_ingest import DocumentIngestError, DocumentText, extract_document
 from .enterprise import analyze_enterprise_change
 from .exports import ARTIFACT_EXPORTS, ARTIFACT_FIELDS, all_results_text, artifact_text, pdf_bytes
 from .live import analyze_live_change
@@ -29,6 +32,7 @@ from .triage import (
     triage_export_text,
 )
 from .triage_ai import AiTriageReview, TriageAiUnavailable, review_triage
+from .triage_context import enrich_triage_context
 from .writeback import (
     WritebackUnavailableError,
     apply_approved,
@@ -158,6 +162,8 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         question: str,
         requirements_text: str,
         ai_review: AiTriageReview | None = None,
+        document_interpretation: DocumentInterpretation | None = None,
+        document_receipt: DocumentText | None = None,
         ai_error: str | None = None,
         error: str | None = None,
         status_code: int = 200,
@@ -182,6 +188,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 "requirements_text": requirements_text,
                 "sample_question": SAMPLE_INCIDENT_QUESTION,
                 "sample_requirements": SAMPLE_SRS_TEXT,
+                "document_receipt": document_receipt,
                 "mapped_rules": mapped_rules,
                 "has_mappings": bool(mapped_rules),
                 "coverage_percent": round(100 * len(mapped_rules) / len(result.rules))
@@ -197,6 +204,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 },
                 "ai_available": bool(os.getenv("OPENAI_API_KEY")),
                 "ai_review": ai_review,
+                "document_interpretation": document_interpretation,
                 "ai_error": ai_error,
                 "error": error,
             },
@@ -207,7 +215,37 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         form = parse_qs(body.decode("utf-8"))
         question = (form.get("question") or [""])[0]
         requirements_text = (form.get("requirements_text") or [""])[0]
-        return question, requirements_text, build_triage_result(question, requirements_text)
+        return question, requirements_text, enrich_triage_context(
+            build_triage_result(question, requirements_text)
+        ).result
+
+    async def triage_result_from_request(
+        request: Request,
+    ) -> tuple[str, str, TriageResult, DocumentText | None]:
+        form = await request.form()
+        question = str(form.get("question") or "")
+        requirements_text = str(form.get("requirements_text") or "")
+        document_receipt = _document_receipt_from_form(form, requirements_text)
+        upload = form.get("document")
+        if isinstance(upload, UploadFile) and upload.filename:
+            document_receipt = extract_document(upload.filename, await upload.read())
+            requirements_text = document_receipt.text
+        result = enrich_triage_context(build_triage_result(question, requirements_text)).result
+        return question, requirements_text, result, document_receipt
+
+    def _document_receipt_from_form(form: object, text: str) -> DocumentText | None:
+        filename = getattr(form, "get", lambda _key: None)("document_filename")
+        media_type = getattr(form, "get", lambda _key: None)("document_media_type")
+        character_count = getattr(form, "get", lambda _key: None)("document_character_count")
+        if not isinstance(filename, str) or not filename:
+            return None
+        if not isinstance(media_type, str) or not media_type:
+            return None
+        try:
+            count = int(character_count)
+        except (TypeError, ValueError):
+            count = len(text)
+        return DocumentText(filename, media_type, text, count)
 
     def default_page(request: Request, page: str) -> HTMLResponse:
         values = request_values(request)
@@ -258,7 +296,9 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
     def triage(request: Request) -> HTMLResponse:
         return render_triage(
             request,
-            result=build_triage_result(SAMPLE_INCIDENT_QUESTION, SAMPLE_SRS_TEXT),
+            result=enrich_triage_context(
+                build_triage_result(SAMPLE_INCIDENT_QUESTION, SAMPLE_SRS_TEXT)
+            ).result,
             question=SAMPLE_INCIDENT_QUESTION,
             requirements_text=SAMPLE_SRS_TEXT,
         )
@@ -290,16 +330,17 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
 
     @application.post("/triage", response_class=HTMLResponse)
     async def submit_triage(request: Request) -> HTMLResponse:
-        body = await request.body()
         try:
-            question, requirements_text, result = triage_result_from_form(body)
-        except ValueError as exc:
-            form = parse_qs(body.decode("utf-8"))
+            question, requirements_text, result, document_receipt = await triage_result_from_request(
+                request
+            )
+        except (DocumentIngestError, ValueError) as exc:
+            form = await request.form()
             return render_triage(
                 request,
                 result=build_triage_result("", ""),
-                question=(form.get("question") or [""])[0],
-                requirements_text=(form.get("requirements_text") or [""])[0],
+                question=str(form.get("question") or ""),
+                requirements_text=str(form.get("requirements_text") or ""),
                 error=str(exc),
                 status_code=422,
             )
@@ -308,14 +349,16 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
             result=result,
             question=question,
             requirements_text=requirements_text,
+            document_receipt=document_receipt,
         )
 
     @application.post("/triage/ai-review", response_class=HTMLResponse)
     async def triage_ai_review(request: Request) -> HTMLResponse:
-        body = await request.body()
         try:
-            question, requirements_text, result = triage_result_from_form(body)
-        except ValueError as exc:
+            question, requirements_text, result, document_receipt = await triage_result_from_request(
+                request
+            )
+        except (DocumentIngestError, ValueError) as exc:
             return render_triage(
                 request,
                 result=build_triage_result("", ""),
@@ -329,6 +372,34 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         if now - ai_last_request.get(client_key, 0) < 15:
             raise HTTPException(status_code=429, detail="AI review rate limit")
         ai_last_request[client_key] = now
+        if document_receipt:
+            try:
+                interpretation = await run_in_threadpool(
+                    interpret_document,
+                    document_receipt,
+                )
+            except DocumentAiUnavailable as exc:
+                return render_triage(
+                    request,
+                    result=result,
+                    question=question,
+                    requirements_text=requirements_text,
+                    document_receipt=document_receipt,
+                    ai_error=str(exc),
+                )
+            interpreted_question = interpretation.incident_question or question
+            interpreted_text = "\n".join(interpretation.requirements)
+            interpreted_result = enrich_triage_context(
+                build_triage_result(interpreted_question, interpreted_text)
+            ).result
+            return render_triage(
+                request,
+                result=interpreted_result,
+                question=interpreted_question,
+                requirements_text=interpreted_text,
+                document_receipt=document_receipt,
+                document_interpretation=interpretation,
+            )
         try:
             review = await run_in_threadpool(review_triage, result)
         except TriageAiUnavailable as exc:
@@ -337,6 +408,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 result=result,
                 question=question,
                 requirements_text=requirements_text,
+                document_receipt=document_receipt,
                 ai_error=str(exc),
                 status_code=503,
             )
@@ -345,6 +417,7 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
             result=result,
             question=question,
             requirements_text=requirements_text,
+            document_receipt=document_receipt,
             ai_review=review,
         )
 
