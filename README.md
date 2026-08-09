@@ -311,6 +311,13 @@ The hosted demo uses a deterministic DataHub-shaped evidence bundle; the include
 
 The fictional AsterVale Living dataset is deliberately synthetic, but the workflow models a real enterprise problem: a cross-functional identifier migration that must be understood before it is changed.
 
+## Submission kit
+
+- [Plain-English submission prep](docs/submission-prep.md)
+- [Devpost draft](docs/devpost-draft.md)
+- [Demo video script](docs/demo-video-script.md)
+- [DataHub positioning notes](docs/judging-positioning.md)
+
 ## License
 
 contextIsKey is available under the [Apache License 2.0](LICENSE).

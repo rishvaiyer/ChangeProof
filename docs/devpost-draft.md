@@ -22,7 +22,7 @@ The demo models AsterVale Living, a fictional national retailer with 420 stores.
 
 The prepared change is `stg_orders.customer_id` from `varchar` to `bigint`.
 
-contextIsKey, built on ChangeProof:
+contextIsKey, built around DataHub context:
 
 1. Maps an uploaded or pasted SRS to DataHub datasets, columns, owners, domains, and glossary terms.
 2. Composes a reviewable chronological SQL investigation across seven functional domains.
