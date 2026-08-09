@@ -12,7 +12,7 @@
 
 **DataHub supplies the enterprise context. contextIsKey turns it into a reviewable investigation.**
 
-[Open the live demo](https://changeproof-production.up.railway.app/triage) · [Watch the judge flow](#judge-flow) · [Read the architecture](#architecture) · [Meet the creator](#creator)
+[Open the live demo](https://changeproof-production.up.railway.app/triage) · [Explore the workflow](#workflow) · [Read the architecture](#architecture) · [Meet the creator](#creator)
 
 </div>
 
@@ -36,16 +36,16 @@ Impact graph · hidden SQL consumers · regional exposure
 Reviewable fixes · validation · rollback · rollout gates
 ```
 
-### Judge-at-a-glance
+### At a glance
 
-| Proof point | What the demo shows |
+| Capability | What contextIsKey does |
 | --- | --- |
 | **Depth of DataHub usage** | Repeated, named context lookups for datasets, columns, owners, glossary terms, lineage, entities, and query history. |
 | **Technical execution** | Document extraction, deterministic mapping, SQL module discovery, impact graph, exports, SARIF, and an optional grounded AI review. |
 | **Real-world usefulness** | A cross-functional accounts-receivable incident spanning Commerce, Finance, Payments, Returns, Fulfillment, Identity, and Regional Policy. |
 | **Trust and safety** | No automatic SQL execution, no silent AI changes, explicit unmapped rules, human approval, rollback controls, and honest evidence labels. |
 
-## Judge flow
+## Workflow
 
 Use the prepared AsterVale Living scenario:
 
@@ -65,7 +65,7 @@ Start with the included accounts-receivable incident, then visit seven focused w
 6. **Rollout:** follow a dependency-ordered migration with explicit gates.
 7. **DataHub actions:** approve individual incident, tag, and documentation drafts.
 
-## 90-second judge path
+## Quick walkthrough
 
 1. Open the [Triage Composer](https://changeproof-production.up.railway.app/triage).
 2. Click **Load example** or upload the included SRS-style incident brief.
@@ -89,7 +89,7 @@ Document -> extracted rules -> DataHub search/schema/lineage context -> chronolo
 
 The original binary is discarded after extraction. OpenAI receives extracted text only after the explicit AI action. AI can organize rules and explain the result; it cannot invent a DataHub asset, column, owner, lineage edge, or execution result.
 
-## Live judge surfaces
+## Product surfaces
 
 The UI is designed to make the context chain visible at a glance—not hide it behind a chat transcript.
 
