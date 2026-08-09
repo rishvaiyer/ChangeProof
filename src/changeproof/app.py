@@ -39,6 +39,20 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
         "/static", StaticFiles(directory=PACKAGE_DIR / "static"), name="static"
     )
 
+    @application.middleware("http")
+    async def revalidate_static(request: Request, call_next):
+        """Force revalidation of static assets.
+
+        Starlette sends ETag and Last-Modified but no Cache-Control, so browsers
+        fall back to heuristic caching and can serve a stale stylesheet for a
+        long time after a deploy. `no-cache` still allows the cache, it just
+        requires a conditional request first, so hits are cheap 304s.
+        """
+        response = await call_next(request)
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     def current_provider() -> AnalysisProvider:
         return analysis_provider or provider_from_env()
 

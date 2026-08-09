@@ -190,3 +190,20 @@ def test_writeback_validates_the_change_before_drafting() -> None:
     )
 
     assert response.status_code == 422
+
+
+def test_static_assets_must_revalidate() -> None:
+    # Without this, browsers heuristically cache the stylesheet and can show a
+    # stale theme for a long time after a deploy.
+    response = client.get("/static/styles.css")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-cache"
+    assert response.headers.get("etag")
+
+
+def test_html_responses_are_not_marked_no_cache() -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "cache-control" not in response.headers
