@@ -19,6 +19,7 @@ from starlette.concurrency import run_in_threadpool
 from .ai_review import AiReviewUnavailable, review_analysis
 from .demo import DemoAnalysis, DemoInputError, catalog_options
 from .enterprise import analyze_enterprise_change
+from .exports import ARTIFACT_EXPORTS, ARTIFACT_FIELDS, all_results_text, artifact_text, pdf_bytes
 from .live import analyze_live_change
 from .writeback import (
     WritebackUnavailableError,
@@ -135,6 +136,8 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
                 "nav_query": (
                     "" if values == baseline_values() else f"?{urlencode(values)}"
                 ),
+                "artifact_exports": ARTIFACT_EXPORTS,
+                "ai_available": bool(os.getenv("OPENAI_API_KEY")),
             },
             status_code=status_code,
         )
@@ -211,25 +214,54 @@ def create_app(analysis_provider: AnalysisProvider | None = None) -> FastAPI:
 
     @application.get("/artifacts/{artifact_name}")
     def artifact(request: Request, artifact_name: str) -> Response:
-        artifact_fields = {
-            "impact-report.json": ("impact_report_json", "application/json"),
-            "discovery-query.sql": ("discovery_query_sql", "text/plain"),
-            "proposed-fixes.sql": ("proposed_fixes_sql", "text/plain"),
-            "validation-queries.sql": ("validation_queries_sql", "text/plain"),
-            "rollback.sql": ("rollback_sql", "text/plain"),
-            "changeproof.sarif": ("sarif_json", "application/json"),
-        }
-        if artifact_name not in artifact_fields:
+        if artifact_name not in ARTIFACT_FIELDS:
             raise HTTPException(status_code=404, detail="Artifact not found")
         analysis = current_provider()(**request_values(request))
         if analysis.artifacts is None:
             raise HTTPException(status_code=404, detail="No artifacts for this scenario")
-        field_name, media_type = artifact_fields[artifact_name]
-        content = getattr(analysis.artifacts, field_name)
+        content = artifact_text(analysis, artifact_name)
+        media_type = (
+            "application/json" if artifact_name.endswith((".json", ".sarif")) else "text/plain"
+        )
         return Response(
             content=content,
             media_type=media_type,
             headers={"Content-Disposition": f'attachment; filename="{artifact_name}"'},
+        )
+
+    @application.get("/exports/{export_name}")
+    def export_result(request: Request, export_name: str) -> Response:
+        if export_name in {"all-results.txt", "all-results.pdf"}:
+            artifact_name = "all-results"
+            export_format = export_name.rsplit(".", 1)[1]
+        elif "." in export_name:
+            artifact_name, export_format = export_name.rsplit(".", 1)
+        else:
+            raise HTTPException(status_code=404, detail="Export format not found")
+        if export_format not in {"txt", "pdf"}:
+            raise HTTPException(status_code=404, detail="Export format not found")
+        if artifact_name != "all-results" and artifact_name not in ARTIFACT_FIELDS:
+            raise HTTPException(status_code=404, detail="Artifact not found")
+
+        analysis = current_provider()(**request_values(request))
+        if analysis.artifacts is None:
+            raise HTTPException(status_code=404, detail="No artifacts for this scenario")
+        content = (
+            all_results_text(analysis)
+            if artifact_name == "all-results"
+            else artifact_text(analysis, artifact_name)
+        )
+        filename = f"{artifact_name.rsplit('.', 1)[0]}.{export_format}"
+        if export_format == "pdf":
+            return Response(
+                content=pdf_bytes("ChangeProof - " + artifact_name.replace("-", " "), content),
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            )
+        return Response(
+            content=content,
+            media_type="text/plain",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     @application.post("/ai-review", response_class=HTMLResponse)

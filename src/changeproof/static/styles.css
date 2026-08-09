@@ -1,26 +1,26 @@
 :root {
   color-scheme: light;
-  --ink: #17203b;
-  --muted: #66708f;
-  --subtle: #929ab2;
-  --line: #e6e8f1;
+  --ink: #12233f;
+  --muted: #42526b;
+  --subtle: #607089;
+  --line: #d9e2ec;
   --surface: #ffffff;
-  --canvas: #f7f8fc;
-  --violet: #6654e8;
-  --violet-dark: #4f3fd0;
-  --violet-soft: #f0edff;
-  --cyan: #00a9c8;
-  --cyan-soft: #e9faff;
-  --coral: #f06479;
-  --coral-soft: #fff0f3;
+  --canvas: #f6f9fc;
+  --violet: #f97316;
+  --violet-dark: #c2410c;
+  --violet-soft: #fff1e8;
+  --cyan: #2563eb;
+  --cyan-soft: #eaf2ff;
+  --coral: #dc5a4f;
+  --coral-soft: #fff0ed;
   --amber: #d78a13;
   --amber-soft: #fff8e8;
   --green: #18a06b;
   --green-soft: #eafaf3;
   --red: #d7475c;
   --red-soft: #fff0f2;
-  --shadow: 0 10px 34px rgba(51, 60, 102, .08);
-  --shadow-hover: 0 18px 44px rgba(64, 54, 147, .14);
+  --shadow: 0 10px 34px rgba(18, 35, 63, .09);
+  --shadow-hover: 0 18px 44px rgba(18, 35, 63, .15);
   --radius: 18px;
   font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -277,4 +277,170 @@ input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px var(--violet-so
   .datahub-hero { align-items: flex-start; flex-wrap: wrap; }.approval-lock { margin-left: 71px; }
   .approval-bar, .next-step-card { align-items: stretch; flex-direction: column; }.approval-bar .button, .next-step-card .button { width: 100%; }
   .readiness-items { flex-wrap: wrap; }.page-wrap > footer { align-items: flex-start; flex-direction: column; }
+}
+
+/* Readability and navigation refresh: the dashboard should explain itself at a glance. */
+body { font-size: 16px; line-height: 1.5; }
+.ambient-one { background: #ffe2c7; }
+.ambient-two { background: #dbeafe; }
+.brand-mark { background: linear-gradient(145deg, #fb923c, #ea580c); box-shadow: 0 8px 20px rgba(234, 88, 12, .25); }
+.workspace-icon { color: #1d4ed8; }
+.primary-nav p { color: #53647a; font-size: 11px; }
+.primary-nav a { color: #42526b; font-size: 14px; min-height: 46px; }
+.primary-nav a:hover { color: var(--violet-dark); background: #fff4ec; }
+.primary-nav a.active { color: var(--violet-dark); background: var(--violet-soft); box-shadow: inset 4px 0 var(--violet); }
+.primary-nav a.active span { color: var(--violet-dark); }
+.breadcrumb { font-size: 13px; }
+.evidence-badge { font-size: 12px; }
+.page-wrap { padding-top: 38px; }
+.page-heading { margin-bottom: 32px; }
+.kicker { font-size: 11px; color: var(--violet-dark); }
+h1 { font-size: clamp(30px, 3.2vw, 40px); line-height: 1.12; letter-spacing: -.035em; }
+.page-heading p { color: #42526b; font-size: 16px; line-height: 1.6; }
+.environment-chip, .strategy-chip, .source-pill { font-size: 11px; }
+.panel-heading h2, .proposal-toolbar h2 { font-size: 22px; }
+.panel-heading p, .proposal-toolbar p { color: #42526b; font-size: 14px; line-height: 1.6; }
+.section-index { color: var(--violet-dark); }
+.safe-badge, .evidence-source { font-size: 11px; }
+.button { min-height: 46px; font-size: 14px; }
+.button-primary { background: linear-gradient(135deg, #fb923c, #ea580c); box-shadow: 0 9px 22px rgba(234, 88, 12, .22); }
+.button-ghost, .button-secondary { color: #1d4ed8; border-color: #bfdbfe; }
+.hero-card { border-color: #fed7aa; background: linear-gradient(118deg, #fff 0%, #fff8f2 52%, #eff6ff 100%); box-shadow: 0 18px 54px rgba(18, 35, 63, .12); }
+.hero-card::before { border-color: rgba(249, 115, 22, .09); }
+.hero-label { font-size: 11px; color: var(--violet-dark); background: #ffedd5; }
+.hero-copy h2 { font-size: clamp(30px, 3vw, 38px); }
+.hero-copy p { color: #42526b; font-size: 16px; line-height: 1.7; }
+.hero-copy code, .hero-copy h2 em { color: var(--violet-dark); }
+.metric-card small { color: #53647a; font-size: 11px; }
+.metric-card strong { font-size: 26px; }
+.metric-card p { color: #53647a; font-size: 12px; }
+.analysis-form label > span { color: #53647a; font-size: 11px; }
+input { font-size: 14px; }
+.scenario-top { font-size: 10px; }
+.scenario-card strong { font-size: 14px; }
+.scenario-card code { color: #1d4ed8; font-size: 12px; }
+.scenario-card small { color: #53647a; font-size: 12px; }
+.insight-card small { font-size: 10px; }
+.insight-card h3 { font-size: 17px; }
+.insight-card p, .insight-card a { font-size: 13px; }
+.lineage-node > span { font-size: 10px; }
+.lineage-node strong { font-size: 14px; }
+.lineage-node small { font-size: 11px; }
+.source-node { border-color: #fed7aa; }
+.sql-row code, .plan-preview code { font-size: 11px; }
+.sql-row > span { font-size: 12px; }
+.plan-preview small { font-size: 10px; }
+.plan-preview h2 { font-size: 18px; }
+.plan-preview p { font-size: 13px; }
+.map-center span { font-size: 10px; }
+.map-center strong { font-size: 30px; }
+.map-center small { font-size: 10px; }
+.region-row > span { font-size: 12px; }
+.region-row strong { font-size: 13px; }
+.flag-list code { font-size: 9px; }
+.artifact-strip strong { font-size: 13px; }
+.artifact-strip small { font-size: 11px; }
+.fix-tabs span { font-size: 11px; }
+.fix-card header strong { font-size: 13px; }
+.fix-card header small, .fix-card > footer { font-size: 10px; }
+.code-compare span { font-size: 10px; }
+.code-compare pre { font-size: 11px; }
+.ai-card { background: linear-gradient(145deg, #12233f, #1d4ed8); }
+.ai-card > small { color: #bfdbfe; font-size: 10px; }
+.ai-card h2 { font-size: 22px; }
+.ai-card p { color: #e0ecff; font-size: 13px; }
+.ai-card .button-dark { color: #12233f; }
+.cost-note { color: #bfdbfe !important; }
+.control-card h3, .gate-card h3 { font-size: 17px; }
+.control-card a strong { font-size: 12px; }
+.control-card a small { font-size: 10px; }
+.readiness-banner { border-color: #fed7aa; background: linear-gradient(110deg, #fff, #fff7ed); }
+.readiness-banner small { font-size: 10px; }
+.readiness-banner h2 { font-size: 20px; }
+.readiness-banner p { font-size: 13px; }
+.readiness-items span { font-size: 11px; }
+.release-timeline small { font-size: 10px; }
+.release-timeline strong { font-size: 13px; }
+.release-timeline p { font-size: 12px; }
+.datahub-hero { border-color: #bfdbfe; background: linear-gradient(110deg, #fff, #eff6ff); }
+.datahub-mark { background: linear-gradient(145deg, #fb923c, #ea580c); }
+.datahub-hero small { font-size: 10px; }
+.datahub-hero h2 { font-size: 22px; }
+.datahub-hero p { font-size: 13px; }
+.approval-lock { font-size: 11px; }
+.alert { font-size: 13px; }
+.write-result strong { font-size: 12px; }
+.write-result p { font-size: 11px; }
+.proposal-card > strong { font-size: 14px; }
+.proposal-card > small { font-size: 10px; }
+.proposal-card > p { font-size: 12px; }
+.proposal-card summary { font-size: 11px; }
+.proposal-card pre { font-size: 10px; }
+.approval-bar strong { font-size: 12px; }
+.approval-bar small { font-size: 10px; }
+
+@media (max-width: 640px) {
+  .sidebar, .primary-nav { min-width: 0; }
+  .primary-nav { justify-content: flex-start; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .primary-nav::-webkit-scrollbar { display: none; }
+  .primary-nav a { flex: none; min-height: 40px; padding: 0 9px; font-size: 11px; white-space: nowrap; }
+  .primary-nav a span { width: 18px; font-size: 14px; }
+  .primary-nav a.active { box-shadow: inset 0 -3px var(--violet); }
+  .page-wrap { padding: 26px 16px; }
+  h1 { font-size: 30px; }
+  .page-heading p { font-size: 15px; }
+  .hero-copy h2 { font-size: 28px; }
+  .hero-copy p { font-size: 15px; }
+  .panel-heading h2, .proposal-toolbar h2 { font-size: 20px; }
+  .panel-heading p, .proposal-toolbar p { font-size: 14px; }
+  .metric-card strong { font-size: 23px; }
+  .metric-card p, .scenario-card small { font-size: 12px; }
+}
+
+.export-panel { margin-top: 22px; padding: 28px; border: 1px solid #bfdbfe; border-radius: 20px; background: linear-gradient(120deg, #fff, #f4f8ff); box-shadow: var(--shadow); }
+.export-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.export-heading h2 { margin: 7px 0 5px; font-size: 24px; letter-spacing: -.03em; }
+.export-heading p { margin: 0; color: #42526b; font-size: 15px; line-height: 1.55; }
+.export-bundle { display: flex; gap: 10px; flex: none; }
+.export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 22px; }
+.export-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 15px 16px; border: 1px solid #d9e2ec; border-radius: 13px; background: #fff; }
+.export-item > div { min-width: 0; }
+.export-item strong, .export-item small { display: block; }
+.export-item strong { font-size: 14px; }
+.export-item small { margin-top: 4px; color: #53647a; font-size: 12px; line-height: 1.35; }
+.export-item > span { display: flex; gap: 5px; flex: none; }
+.export-item a { padding: 6px 7px; border: 1px solid #bfdbfe; border-radius: 6px; color: #1d4ed8; font-size: 11px; font-weight: 800; text-decoration: none; }
+.export-item a:hover { color: #c2410c; border-color: #fdba74; background: #fff7ed; }
+
+/* The content is the product: keep labels, SQL, and evidence readable without zooming. */
+.fix-card header strong { font-size: 16px; }
+.fix-card header small { font-size: 12px; }
+.fix-card > header { padding: 18px 20px; }
+.fix-list-panel, .fix-card, .fix-card > header, .fix-card > header > div, .fix-card > header > div > div { min-width: 0; }
+.fix-card header strong { overflow-wrap: anywhere; }
+.code-compare span { padding: 14px 20px 0; font-size: 12px; }
+.code-compare pre { min-height: 112px; padding: 12px 20px 20px; font-size: 14px; line-height: 1.65; }
+.fix-card > footer { padding: 13px 20px; font-size: 12px; }
+.fix-status, .review-status { font-size: 11px; }
+.fix-tabs span { padding: 10px 14px; font-size: 13px; }
+.ai-card h2 { font-size: 24px; }
+.ai-card p { font-size: 15px; line-height: 1.6; }
+.control-card a strong { font-size: 14px; }
+.control-card a small { font-size: 12px; }
+.sql-row > span { font-size: 13px; }
+.sql-row code { font-size: 12px; }
+
+@media (max-width: 900px) {
+  .export-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .export-panel { padding: 20px; }
+  .export-heading { align-items: stretch; flex-direction: column; }
+  .export-heading h2 { font-size: 22px; }
+  .export-heading p { font-size: 14px; }
+  .export-bundle { flex-direction: column; }
+  .export-grid { grid-template-columns: 1fr; }
+  .fix-card header strong { font-size: 15px; }
+  .code-compare pre { font-size: 13px; }
 }

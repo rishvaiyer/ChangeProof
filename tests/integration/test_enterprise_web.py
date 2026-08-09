@@ -77,6 +77,52 @@ def test_artifact_downloads_are_allowlisted() -> None:
     assert response.status_code == 404
 
 
+@pytest.mark.parametrize("suffix, media_type", [("txt", "text/plain"), ("pdf", "application/pdf")])
+@pytest.mark.parametrize(
+    "artifact_name",
+    [
+        "impact-report.json",
+        "discovery-query.sql",
+        "proposed-fixes.sql",
+        "validation-queries.sql",
+        "rollback.sql",
+        "changeproof.sarif",
+    ],
+)
+def test_every_artifact_can_be_exported_as_text_or_pdf(
+    artifact_name: str, suffix: str, media_type: str
+) -> None:
+    response = client.get(f"/exports/{artifact_name}.{suffix}")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith(media_type)
+    assert response.headers["content-disposition"].endswith(
+        f'filename="{artifact_name.removesuffix(artifact_name[artifact_name.rfind("."):])}.{suffix}"'
+    )
+    assert response.content
+
+
+def test_all_results_bundle_can_be_exported_as_text_or_pdf() -> None:
+    text_response = client.get("/exports/all-results.txt")
+    pdf_response = client.get("/exports/all-results.pdf")
+
+    assert text_response.status_code == 200
+    assert "ChangeProof complete result bundle" in text_response.text
+    assert "usp_reconcile_loyalty_customer" in text_response.text
+    assert pdf_response.status_code == 200
+    assert pdf_response.content.startswith(b"%PDF")
+
+
+def test_pages_expose_a_clear_export_center() -> None:
+    response = client.get("/fixes")
+
+    assert response.status_code == 200
+    assert "Download all results" in response.text
+    assert "TXT" in response.text
+    assert "PDF" in response.text
+    assert "/exports/proposed-fixes.sql.pdf" in response.text
+
+
 def test_impact_report_download_is_valid_json() -> None:
     response = client.get("/artifacts/impact-report.json")
 
@@ -96,6 +142,16 @@ def test_ai_review_is_explicit_and_explains_missing_key(monkeypatch) -> None:
     assert "AI_REVIEWED" not in page.text
     assert response.status_code == 503
     assert "OPENAI_API_KEY" in response.text
+
+
+def test_ai_key_status_never_exposes_the_secret(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-for-rendering")
+
+    response = client.get("/fixes")
+
+    assert response.status_code == 200
+    assert "AI REVIEW READY" in response.text
+    assert "sk-test-not-for-rendering" not in response.text
 
 
 def test_ai_review_rejects_a_missing_analysis_token() -> None:

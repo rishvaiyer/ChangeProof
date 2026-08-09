@@ -55,6 +55,16 @@
         <div class="page-wrap">
           {% if error %}<div class="alert alert-error" role="alert"><strong>Analysis unavailable</strong><span>{{ error }}</span></div>{% endif %}
           {% block content %}{% endblock %}
+          {% if analysis and analysis.artifacts %}
+          <section class="export-panel" aria-labelledby="export-title">
+            <div class="export-heading"><div><span class="kicker"><i></i>TAKE IT WITH YOU</span><h2 id="export-title">Download all results</h2><p>Choose a ready-to-share text or PDF export for the full bundle or any individual result.</p></div><div class="export-bundle"><a class="button button-primary" href="/exports/all-results.txt{{ nav_query }}">TXT bundle ↓</a><a class="button button-secondary" href="/exports/all-results.pdf{{ nav_query }}">PDF bundle ↓</a></div></div>
+            <div class="export-grid">
+              {% for item in artifact_exports %}
+              <article class="export-item"><div><strong>{{ item.name }}</strong><small>{{ item.description }}</small></div><span><a href="/exports/{{ item.artifact_name }}.txt{{ nav_query }}">TXT</a><a href="/exports/{{ item.artifact_name }}.pdf{{ nav_query }}">PDF</a></span></article>
+              {% endfor %}
+            </div>
+          </section>
+          {% endif %}
           <footer>
             <span><strong>ChangeProof</strong> · Apache-2.0</span>
             <span>DataHub evidence + deterministic remediation · Synthetic enterprise data</span>
