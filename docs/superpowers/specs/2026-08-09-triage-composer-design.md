@@ -1,8 +1,8 @@
-# DataHub Triage Composer Design
+# contextIsKey Triage Composer Design
 
 ## Goal
 
-Add a judge-ready Triage Composer to ChangeProof that turns an enterprise incident question and pasted or uploaded SRS text into an evidence-backed, cross-domain chronological SQL investigation package.
+Add a judge-ready Triage Composer to **contextIsKey**, built on ChangeProof, that turns an enterprise incident question and pasted or uploaded SRS text into an evidence-backed, cross-domain chronological SQL investigation package.
 
 ## User story
 
@@ -63,6 +63,7 @@ The sample query uses SQL Server syntax and includes independently readable CTEs
 - Explain each section in plain language with a short “Like I’m five” sentence.
 - Make the judge story visible without requiring a form submission.
 - Visualize real result data with a context coverage ring, a cross-domain query flow, a DataHub evidence timeline, and domain coverage cards. Do not introduce decorative or invented metrics.
+- Use exact primary branding `contextIsKey` with the secondary credit `Built on ChangeProof`. Keep repository, Railway service/domain, Python package, and internal model names stable for tonight's release.
 
 ## Success criteria
 
