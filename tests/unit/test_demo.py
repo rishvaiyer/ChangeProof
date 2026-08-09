@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 
 from changeproof.demo import (
+    CATALOG,
     analyze_demo_change,
     build_demo_request,
     compose_analysis,
@@ -23,6 +24,30 @@ def test_analyze_demo_type_change_returns_impact_and_safe_plan() -> None:
     assert result.plan.strategy == "parallel_typed_field"
     assert result.plan.rollout_steps
     assert result.evidence_source == "Bundled SonicLedger demo metadata"
+    assert result.company_name == "SonicLedger"
+    assert result.sql_dependencies == ()
+    assert result.region_exposures == ()
+
+
+def test_customer_id_is_the_astervale_enterprise_scenario() -> None:
+    entry = CATALOG["customer_id"]
+
+    assert entry.company_name == "AsterVale Living"
+    assert entry.source_table == "stg_orders"
+    assert entry.source_urn.startswith(
+        "urn:li:dataset:(urn:li:dataPlatform:dbt,astervale.models."
+    )
+
+    result = analyze_demo_change(
+        column="customer_id", old_type="varchar", new_type="bigint"
+    )
+    assert result.company_name == "AsterVale Living"
+    assert [asset.name for asset in result.impact.impacted_assets] == [
+        "fct_order_sales",
+        "loyalty_customer_value",
+        "regional_returns",
+        "executive_revenue_dashboard",
+    ]
 
 
 def test_analyze_demo_rejects_unknown_column() -> None:

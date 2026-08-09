@@ -1,6 +1,15 @@
 from pathlib import Path
 
-from changeproof.models import ChangeRequest, ChangeType, RemediationPlan
+from changeproof.models import (
+    ChangeRequest,
+    ChangeType,
+    Confidence,
+    RegionExposure,
+    RegionRisk,
+    RemediationPlan,
+    SqlDependency,
+    SqlMatchKind,
+)
 
 
 def test_change_request_and_remediation_plan_round_trip() -> None:
@@ -22,3 +31,28 @@ def test_change_request_and_remediation_plan_round_trip() -> None:
     )
     assert request.change_type is ChangeType.COLUMN_RENAME
     assert plan.supported_automatically is True
+
+
+def test_enterprise_evidence_models_preserve_review_state() -> None:
+    dependency = SqlDependency(
+        schema_name="loyalty",
+        object_name="usp_reconcile_customer",
+        object_type="SQL_STORED_PROCEDURE",
+        snippet="TRY_CONVERT(INT, customer_id)",
+        match_kind=SqlMatchKind.CONVERT,
+        confidence=Confidence.HIGH,
+        regions=["WEST"],
+        proposed_sql="TRY_CONVERT(BIGINT, customer_id)",
+    )
+    exposure = RegionExposure(
+        region="WEST",
+        asset_names=["loyalty_customer_value"],
+        sql_objects=[dependency.object_name],
+        owners=["loyalty-platform@astervale.demo"],
+        policy_flags=["CA_PRIVACY_REVIEW"],
+        risk=RegionRisk.HIGH,
+    )
+
+    assert dependency.match_kind is SqlMatchKind.CONVERT
+    assert exposure.risk is RegionRisk.HIGH
+    assert exposure.policy_flags == ["CA_PRIVACY_REVIEW"]

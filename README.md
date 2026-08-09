@@ -4,7 +4,7 @@
 
 ChangeProof uses DataHub metadata to trace the observed downstream impact of a proposed schema change, score the evidence, and generate a staged remediation and rollback plan.
 
-[Live demo](https://changeproof-production.up.railway.app/) · [Draft implementation PR](https://github.com/rishvaiyer/ChangeProof/pull/1) · [MIT license](LICENSE)
+[Live demo](https://changeproof-production.up.railway.app/) · [Draft implementation PR](https://github.com/rishvaiyer/ChangeProof/pull/1) · [Apache-2.0 license](LICENSE)
 
 > The public Railway demo uses bundled SonicLedger metadata for reliability. The repository also includes an opt-in local integration path verified against live DataHub MCP lineage.
 
@@ -182,4 +182,4 @@ These boundaries are visible because ChangeProof is meant to support data-engine
 
 ## License
 
-ChangeProof is available under the [MIT License](LICENSE).
+ChangeProof is available under the [Apache License 2.0](LICENSE).

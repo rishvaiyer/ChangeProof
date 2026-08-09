@@ -23,6 +23,58 @@ class Confidence(StrEnum):
     LOW = "LOW"
 
 
+class SqlMatchKind(StrEnum):
+    CONVERT = "convert"
+    CAST = "cast"
+    JOIN = "join"
+    PREDICATE = "predicate"
+    ASSIGNMENT = "assignment"
+    DYNAMIC_SQL = "dynamic_sql"
+
+
+class RegionRisk(StrEnum):
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    REVIEW = "REVIEW"
+
+
+class SqlDependency(BaseModel):
+    schema_name: str
+    object_name: str
+    object_type: str
+    snippet: str
+    match_kind: SqlMatchKind
+    confidence: Confidence
+    regions: list[str] = Field(default_factory=list)
+    proposed_sql: str | None = None
+    manual_review_reason: str | None = None
+
+
+class RegionExposure(BaseModel):
+    region: str
+    asset_names: list[str] = Field(default_factory=list)
+    sql_objects: list[str] = Field(default_factory=list)
+    owners: list[str] = Field(default_factory=list)
+    policy_flags: list[str] = Field(default_factory=list)
+    risk: RegionRisk
+
+
+class ArtifactBundle(BaseModel):
+    impact_report_json: str
+    discovery_query_sql: str
+    proposed_fixes_sql: str
+    validation_queries_sql: str
+    rollback_sql: str
+    sarif_json: str
+
+
+class AiReview(BaseModel):
+    status: str = "AI_REVIEWED"
+    summary: str
+    fix_notes: list[str] = Field(default_factory=list)
+    unresolved_risks: list[str] = Field(default_factory=list)
+
+
 class ChangeRequest(BaseModel):
     change_type: ChangeType
     dataset_urn: str | None = None
