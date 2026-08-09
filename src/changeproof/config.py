@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     datahub_gms_url: str = "http://localhost:8080"
     datahub_gms_token: str = ""
+    datahub_mcp_url: str = ""
+    datahub_mcp_token: str = ""
     openai_api_key: str = ""
     changeproof_model: str = Field(
         default="gpt-5.4-mini",

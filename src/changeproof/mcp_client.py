@@ -4,11 +4,13 @@ import base64
 import json
 from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from typing import Any
 
 import anyio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import httpx2, streamable_http_client
 
 from .config import Settings
 from .models import LineageNode, MetadataEvidence
@@ -17,6 +19,16 @@ REQUIRED_DATAHUB_TOOLS = frozenset({"get_lineage", "list_schema_fields"})
 DATAHUB_LINEAGE_MAX_HOPS = 3
 
 SessionFactory = Callable[[], AsyncIterator[Any]]
+
+
+@dataclass(frozen=True)
+class DataHubAssetContext:
+    asset_urn: str
+    fields: tuple[str, ...]
+    owners: tuple[str, ...]
+    lineage_assets: tuple[str, ...]
+    query_count: int = 0
+    search_matches: int = 0
 
 
 class DataHubMcpClient:
@@ -122,8 +134,122 @@ class DataHubMcpClient:
                 missing=missing,
             )
 
+    def get_asset_context(
+        self,
+        *,
+        asset_urn: str,
+        source_field: str,
+    ) -> DataHubAssetContext:
+        return anyio.run(self.get_asset_context_async, asset_urn, source_field)
+
+    async def get_asset_context_async(
+        self,
+        asset_urn: str,
+        source_field: str,
+    ) -> DataHubAssetContext:
+        async with self._session_factory() as session:
+            available = await self._verify_required_tools(session)
+            schema_payload = await self._call_tool(
+                session,
+                "list_schema_fields",
+                {"urn": asset_urn},
+            )
+            fields = tuple(
+                field_name
+                for field_name in (
+                    self._field_name(field)
+                    for field in self._as_list(schema_payload.get("fields"))
+                )
+                if field_name is not None
+            )
+            lineage_payload = await self._call_tool(
+                session,
+                "get_lineage",
+                {
+                    "urn": asset_urn,
+                    "column": source_field,
+                    "upstream": False,
+                    "max_hops": DATAHUB_LINEAGE_MAX_HOPS,
+                },
+            )
+            lineage_assets = tuple(
+                entity_name
+                for result in self._as_list(
+                    (lineage_payload.get("downstreams") or {}).get("searchResults")
+                )
+                if isinstance(result, Mapping)
+                for entity in [result.get("entity")]
+                if isinstance(entity, Mapping)
+                for entity_name in [self._entity_name(entity, fallback_urn=asset_urn)]
+            )
+
+            owners: tuple[str, ...] = ()
+            if "get_entities" in available:
+                entities_payload = await self._call_tool(
+                    session,
+                    "get_entities",
+                    {"urns": [asset_urn]},
+                )
+                entities = self._as_list(entities_payload.get("entities"))
+                if entities and isinstance(entities[0], Mapping):
+                    owners = tuple(self._owner_emails(entities[0]))
+
+            query_count = 0
+            if "get_dataset_queries" in available:
+                queries_payload = await self._call_tool(
+                    session,
+                    "get_dataset_queries",
+                    {"urn": asset_urn},
+                )
+                query_count = len(
+                    self._as_list(
+                        queries_payload.get("queries")
+                        or queries_payload.get("searchResults")
+                        or queries_payload.get("results")
+                    )
+                )
+
+            search_matches = 0
+            if "search" in available:
+                search_payload = await self._call_tool(
+                    session,
+                    "search",
+                    {"query": source_field},
+                )
+                search_matches = len(
+                    self._as_list(
+                        search_payload.get("searchResults")
+                        or search_payload.get("results")
+                        or search_payload.get("entities")
+                    )
+                )
+
+            return DataHubAssetContext(
+                asset_urn=asset_urn,
+                fields=fields,
+                owners=owners,
+                lineage_assets=lineage_assets,
+                query_count=query_count,
+                search_matches=search_matches,
+            )
+
     @asynccontextmanager
     async def _open_session(self) -> AsyncIterator[ClientSession]:
+        if self._settings.datahub_mcp_url:
+            headers = {}
+            token = self._settings.datahub_mcp_token or self._settings.datahub_gms_token
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
+            async with httpx2.AsyncClient(headers=headers) as http_client:
+                async with streamable_http_client(
+                    self._settings.datahub_mcp_url,
+                    http_client=http_client,
+                ) as (read_stream, write_stream):
+                    async with ClientSession(read_stream, write_stream) as session:
+                        await session.initialize()
+                        yield session
+            return
+
         server = StdioServerParameters(
             command="uvx",
             args=["mcp-server-datahub@0.6.0"],
@@ -137,12 +263,13 @@ class DataHubMcpClient:
                 await session.initialize()
                 yield session
 
-    async def _verify_required_tools(self, session: Any) -> None:
+    async def _verify_required_tools(self, session: Any) -> set[str]:
         tool_list = await session.list_tools()
         available = {tool.name for tool in tool_list.tools}
         missing = sorted(REQUIRED_DATAHUB_TOOLS - available)
         if missing:
             raise ValueError(f"Missing required DataHub MCP tools: {', '.join(missing)}")
+        return available
 
     async def _call_tool(
         self,

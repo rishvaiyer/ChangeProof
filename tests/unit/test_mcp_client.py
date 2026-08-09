@@ -268,3 +268,78 @@ def test_get_downstream_context_rejects_missing_required_tools() -> None:
             source_urn=SOURCE_URN,
             source_field="artist_id",
         )
+
+
+def test_get_asset_context_reads_multiple_datahub_context_surfaces() -> None:
+    session = FakeSession(
+        tool_names=[
+            "list_schema_fields",
+            "get_lineage",
+            "get_entities",
+            "get_dataset_queries",
+            "search",
+        ],
+        tool_results={
+            "list_schema_fields": FakeCallToolResult(
+                structured_content={
+                    "fields": [
+                        {"fieldPath": "artist_id"},
+                        {"fieldPath": "track_id"},
+                    ]
+                }
+            ),
+            "get_lineage": FakeCallToolResult(
+                structured_content={
+                    "downstreams": {
+                        "searchResults": [
+                            {
+                                "entity": {
+                                    "urn": PAYOUTS_URN,
+                                    "type": "DATASET",
+                                    "name": "artist_payouts",
+                                },
+                                "degree": 1,
+                            }
+                        ]
+                    }
+                }
+            ),
+            "get_entities": FakeCallToolResult(
+                structured_content={
+                    "entities": [
+                        {
+                            "ownership": {
+                                "owners": [
+                                    {"owner": {"properties": {"email": "owner@example.com"}}}
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ),
+            "get_dataset_queries": FakeCallToolResult(
+                structured_content={"queries": [{"query": "SELECT artist_id FROM streams"}]}
+            ),
+            "search": FakeCallToolResult(
+                structured_content={"searchResults": [{"entity": {"urn": SOURCE_URN}}]}
+            ),
+        },
+    )
+
+    context = build_client(session).get_asset_context(
+        asset_urn=SOURCE_URN,
+        source_field="artist_id",
+    )
+
+    assert context.fields == ("artist_id", "track_id")
+    assert context.owners == ("owner@example.com",)
+    assert context.lineage_assets == ("artist_payouts",)
+    assert context.query_count == 1
+    assert context.search_matches == 1
+    assert [name for name, _ in session.calls] == [
+        "list_schema_fields",
+        "get_lineage",
+        "get_entities",
+        "get_dataset_queries",
+        "search",
+    ]
