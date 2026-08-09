@@ -40,6 +40,22 @@ Document -> extracted rules -> DataHub search/schema/lineage context -> chronolo
 
 The original binary is discarded after extraction. OpenAI receives extracted text only after the explicit AI action. AI can organize rules and explain the result; it cannot invent a DataHub asset, column, owner, lineage edge, or execution result.
 
+## Live judge surfaces
+
+The UI is designed to make the context chain visible at a glance:
+
+![Triage Composer](docs/screenshots/contextiskey-triage.jpg)
+*Document upload, extracted SRS rules, privacy boundary, and DataHub-shaped context.*
+
+![Impact graph](docs/screenshots/contextiskey-impact.jpg)
+*Column-level lineage joins observed DataHub relationships to hidden SQL consumers.*
+
+![Regional exposure](docs/screenshots/contextiskey-regions.jpg)
+*Synthetic enterprise geography turns technical impact into an operating-risk view.*
+
+![Fix Studio](docs/screenshots/contextiskey-fixes.jpg)
+*Reviewable SQL drafts, manual-review flags, and no-auto-execution controls.*
+
 ## Enterprise scenario
 
 AsterVale Living is a fictional national home-furnishings retailer with 420 stores and six regional distribution centers. All company, customer, procedure, and regional data is synthetic.
@@ -150,6 +166,10 @@ export OPENAI_API_KEY="your-key"
 The key alone makes no API request. A request occurs only after an explicit click.
 
 ## Live DataHub path
+
+### No Cloud required for the demo
+
+If you cannot provision DataHub Cloud tonight, leave the MCP URL and token unset. The public demo still runs end to end with a bundled, synthetic DataHub-shaped graph and labels that evidence mode honestly. Do not enter `YOUR_TENANT` literally; it is only a placeholder.
 
 ### Railway / DataHub Cloud
 
