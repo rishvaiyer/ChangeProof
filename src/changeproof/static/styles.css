@@ -120,7 +120,11 @@ li::before { content: counter(steps, decimal-leading-zero); position: absolute; 
 .proposal-title { color: #272D48; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
 .proposal-rationale { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 11px 0 0 28px; }
 .proposal-body { color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 13px 0 0 28px; padding: 14px; font: 400 11px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 190px; overflow-y: auto; }
+.sim-note { display: block; background: var(--amber-soft); border: 1px solid var(--amber-line); border-radius: 8px; padding: 12px 14px; margin: 0 0 22px; color: #8A5A12; font-size: 12px; line-height: 1.8; }
+.sim-note code { background: #FCEDC7; border-radius: 4px; padding: 1px 5px; font-size: 11px; white-space: nowrap; }
+.sim-badge { display: inline-block; background: var(--amber); color: #fff; border-radius: 4px; padding: 2px 7px; margin-right: 8px; font: 800 9px Mulish, sans-serif; letter-spacing: .09em; vertical-align: 1px; }
 .writeback-results li { border-left: 3px solid var(--line); padding: 9px 0 9px 14px; margin-bottom: 8px; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.writeback-results li.applied .sim-badge { margin-right: 6px; vertical-align: 1px; }
 .writeback-results li.applied { border-left-color: var(--green); background: var(--green-soft); }
 .writeback-results li.failed { border-left-color: var(--red); background: var(--red-soft); }
 .writeback-results strong { color: #272D48; }

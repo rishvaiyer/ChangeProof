@@ -105,8 +105,11 @@ DataHub's GraphQL mutations. The write path is deliberately gated:
 3. On approval the proposals are **rebuilt on the server** from the analysis.
    The request carries proposal ids, never content, so an approval cannot push
    arbitrary text into the catalog.
-4. With no DataHub reachable, approval is refused with a plain message rather
-   than simulated.
+4. The hosted demo runs this in simulated mode so the whole flow is clickable
+   without a DataHub behind it. Approving records the entry in a local demo
+   catalog and renders it under a `SIMULATED` label; it makes no network call
+   and never claims a DataHub write. Simulation must be opted into explicitly,
+   so a misconfigured deploy refuses rather than quietly pretending.
 
 The agent proposes. A human disposes. That gate is the point, not a limitation:
 an agent that can silently write to a company's metadata catalog is not one a
@@ -127,5 +130,6 @@ State these plainly; they cost nothing and they protect every other claim.
 - The live DataHub integration runs locally and is opt-in.
 - Remediation plans are rule-derived. No AI-generated remediation is claimed.
 - The hosted demo is not connected to DataHub Cloud.
-- Write-back needs a reachable DataHub. On the hosted demo the drafts are
-  visible and approval is refused, not faked.
+- The hosted demo's write-back is simulated and labelled as such on screen. It
+  records to a local demo catalog, not to DataHub. The real GraphQL write path
+  runs under `make live-demo`.

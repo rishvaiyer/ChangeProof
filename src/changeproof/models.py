@@ -121,6 +121,7 @@ class WritebackResult(BaseModel):
     proposal_id: str | None = None
     action: ProposalAction | None = None
     applied: bool = False
+    simulated: bool = False
 
 
 class ChangeProofReport(BaseModel):

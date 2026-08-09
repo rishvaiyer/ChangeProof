@@ -173,9 +173,11 @@ credible, not less.
 - The live DataHub integration runs locally and is opt-in.
 - Remediation plans are rule-derived. No AI-generated remediation is claimed.
 - The hosted demo is not connected to DataHub Cloud.
-- Write-back requires a reachable DataHub. On the hosted demo the drafts render
-  and approval is refused rather than simulated, so do not promise a judge they
-  can complete a write-back from the public URL. Show it via `make live-demo`.
+- The hosted demo's write-back is **simulated and labelled `SIMULATED` on
+  screen**: approving records the entry in a local demo catalog and shows what
+  would be sent, with no network call and no claim of a DataHub write. The real
+  GraphQL write path runs under `make live-demo`. Say "simulated" when
+  describing the public demo; never imply it wrote to a real DataHub.
 
 # Notes before submitting
 

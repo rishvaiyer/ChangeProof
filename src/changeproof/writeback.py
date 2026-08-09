@@ -229,18 +229,63 @@ def _mutation_for(proposal: ChangeProposal) -> tuple[str, dict[str, object]]:
     raise WritebackUnavailableError(f"Unsupported proposal action: {proposal.action}")
 
 
+class SimulatedWriteClient:
+    """Records approved write-backs into an in-process demo catalog.
+
+    Used when no DataHub is configured, so the hosted demo can show the whole
+    approval flow end to end. It performs no network call and never claims a
+    DataHub write; every result it returns is marked `simulated` and the UI
+    labels it as such. The real GraphQL path is DataHubWriteClient.
+    """
+
+    def __init__(self) -> None:
+        self.catalog: list[ChangeProposal] = []
+
+    def is_live(self) -> bool:
+        return True
+
+    def apply(self, proposal: ChangeProposal) -> WritebackResult:
+        self.catalog.append(proposal)
+        return WritebackResult(
+            succeeded=True,
+            applied=True,
+            simulated=True,
+            dataset_urn=proposal.target_urn,
+            proposal_id=proposal.proposal_id,
+            action=proposal.action,
+            properties_written={"title": proposal.title},
+        )
+
+
+DEMO_CATALOG = SimulatedWriteClient()
+
+
+def writeback_mode(settings: Settings | None = None) -> str:
+    return (settings or Settings.from_env()).changeproof_writeback_mode.strip().lower()
+
+
+def client_for_mode(settings: Settings | None = None):
+    settings = settings or Settings.from_env()
+    mode = writeback_mode(settings)
+    if mode == "simulated":
+        return DEMO_CATALOG
+    if mode == "datahub":
+        return DataHubWriteClient(settings=settings)
+    raise WritebackUnavailableError(f"Unknown CHANGE_PROOF_WRITEBACK_MODE: {mode}")
+
+
 def apply_approved(
     *,
     analysis: DemoAnalysis,
     approved_ids: list[str],
-    client: DataHubWriteClient | None = None,
+    client=None,
 ) -> list[WritebackResult]:
     """Apply only the approved proposals, rebuilt from the analysis.
 
     The request supplies ids, never content. Unknown ids are ignored.
     """
 
-    write_client = client or DataHubWriteClient()
+    write_client = client if client is not None else client_for_mode()
     if not write_client.is_live():
         raise WritebackUnavailableError(
             "No DataHub instance is reachable, so nothing was written. "

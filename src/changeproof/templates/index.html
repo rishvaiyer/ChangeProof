@@ -141,13 +141,18 @@
           </div>
           <p class="solution-summary">ChangeProof drafts these entries and stops. Approving sends only the selected items, rebuilt on the server, to DataHub.</p>
 
+          {% if simulated_mode %}
+          <p class="sim-note"><span class="sim-badge">SIMULATED</span> No DataHub is connected to this hosted demo, so approving records the entry in a local demo catalog and shows you exactly what would be sent. The same approval runs against a real DataHub via <code>make live-demo</code>.</p>
+          {% endif %}
+
           {% if writeback_results %}
           <ul class="writeback-results">
             {% for result in writeback_results %}
             <li class="{{ 'applied' if result.applied else 'failed' }}">
+              {% if result.simulated %}<span class="sim-badge">SIMULATED</span>{% endif %}
               <strong>{{ result.action.value if result.action else 'unknown' }}</strong>
               on <code>{{ result.dataset_urn }}</code>
-              {% if result.applied %}written to DataHub{% else %}failed: {{ result.error }}{% endif %}
+              {% if result.applied %}{% if result.simulated %}recorded in the demo catalog, not sent to DataHub{% else %}written to DataHub{% endif %}{% else %}failed: {{ result.error }}{% endif %}
             </li>
             {% endfor %}
           </ul>

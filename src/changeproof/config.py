@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     )
     metadata_max_age_hours: float = 24.0
     demo_project_dir: str = "demo/sonicledger"
+    changeproof_writeback_mode: str = Field(
+        default="datahub",
+        validation_alias="CHANGE_PROOF_WRITEBACK_MODE",
+    )
 
     model_config = SettingsConfigDict(env_prefix="", extra="ignore")
 

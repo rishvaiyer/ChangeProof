@@ -137,3 +137,67 @@ def test_apply_approved_ignores_unknown_ids(analysis):
         analysis=analysis, approved_ids=["not-a-real-proposal"], client=_client(handler)
     )
     assert results == []
+
+
+def test_simulated_client_records_without_network(analysis):
+    from changeproof.writeback import SimulatedWriteClient
+
+    sim = SimulatedWriteClient()
+    results = apply_approved(
+        analysis=analysis,
+        approved_ids=["incident-source", "docs-source"],
+        client=sim,
+    )
+
+    assert len(results) == 2
+    assert all(r.applied and r.simulated and r.succeeded for r in results)
+    assert [p.proposal_id for p in sim.catalog] == ["incident-source", "docs-source"]
+
+
+def test_simulated_client_still_honours_the_approval_gate(analysis):
+    from changeproof.writeback import SimulatedWriteClient
+
+    sim = SimulatedWriteClient()
+    results = apply_approved(analysis=analysis, approved_ids=["forged"], client=sim)
+
+    assert results == []
+    assert sim.catalog == []
+
+
+def test_mode_selects_the_client(monkeypatch):
+    from changeproof.writeback import DataHubWriteClient, SimulatedWriteClient, client_for_mode
+
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
+    assert isinstance(client_for_mode(), SimulatedWriteClient)
+
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "datahub")
+    assert isinstance(client_for_mode(), DataHubWriteClient)
+
+
+def test_unknown_mode_is_rejected(monkeypatch):
+    from changeproof.writeback import client_for_mode
+
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "pretend")
+    with pytest.raises(WritebackUnavailableError):
+        client_for_mode()
+
+
+def test_default_mode_is_datahub_not_simulated(monkeypatch):
+    # Simulation must be opted into explicitly; a misconfigured deploy should
+    # refuse honestly rather than silently pretend it wrote to DataHub.
+    from changeproof.writeback import writeback_mode
+
+    monkeypatch.delenv("CHANGE_PROOF_WRITEBACK_MODE", raising=False)
+    assert writeback_mode() == "datahub"
+
+
+def test_real_client_results_are_never_marked_simulated(analysis):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/health":
+            return httpx.Response(200)
+        return httpx.Response(200, json={"data": {}})
+
+    result = _client(handler).apply(build_proposals(analysis)[0])
+
+    assert result.applied
+    assert not result.simulated

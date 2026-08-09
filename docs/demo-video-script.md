@@ -106,11 +106,13 @@ incident on `stg_streams`.
 > I wouldn't install an agent that can quietly write to our metadata. So I
 > didn't build one.
 
-**Recording against the hosted demo only?** Tick the boxes, click approve, show
-the refusal:
+**Recording against the hosted demo only?** Tick the boxes and click approve.
+It completes and shows each entry under a `SIMULATED` label. Say:
 
-> There's no DataHub behind the public demo, so it just tells you that instead
-> of pretending it wrote something.
+> There's no DataHub behind the public demo, so this one's simulated, and it
+> says so right there. It records what it would send instead of pretending it
+> sent it. Against a real DataHub it's the same approval, it just actually
+> lands.
 
 ---
 
@@ -146,8 +148,9 @@ the refusal:
 Not true today, even in passing.
 
 - That the hosted demo is connected to live DataHub or DataHub Cloud.
-- That you can finish a write-back from the public demo URL. You can't. There's
-  no DataHub behind it, and it refuses instead of faking it.
+- That the public demo wrote to a real DataHub. It didn't. That one is
+  simulated and labelled `SIMULATED` on screen. Say "simulated" out loud if you
+  show it.
 - That the remediation plans are AI generated. They're rule based.
 
 ## After recording

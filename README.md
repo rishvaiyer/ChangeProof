@@ -170,7 +170,7 @@ tests/              unit, dbt integration, web, and opt-in live DataHub tests
 - The public form demonstrates the prepared `artist_id` type-change scenario.
 - Remediation is deterministic; AI-generated review is not enabled yet.
 - Dynamic SQL and unobserved external consumers require explicit human review.
-- Write-back requires a reachable DataHub. On the hosted demo the drafts render and approval is refused rather than simulated.
+- The hosted demo runs write-back in **simulated mode** (`CHANGE_PROOF_WRITEBACK_MODE=simulated`): approving records the entry in a local demo catalog and shows exactly what would be sent, labelled `SIMULATED` on screen. It performs no network call and never claims a DataHub write. The real GraphQL path is the default (`datahub`) and is what `make live-demo` exercises.
 
 These boundaries are visible because ChangeProof is meant to support data-engineering decisions, not manufacture confidence the metadata cannot justify.
 

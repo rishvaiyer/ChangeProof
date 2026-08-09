@@ -207,3 +207,42 @@ def test_html_responses_are_not_marked_no_cache() -> None:
 
     assert response.status_code == 200
     assert "cache-control" not in response.headers
+
+
+def test_simulated_mode_labels_the_flow_and_completes_it(monkeypatch) -> None:
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
+
+    page = client.get("/")
+    assert "SIMULATED" in page.text
+    assert "No DataHub is connected" in page.text
+
+    response = client.post(
+        "/writeback/apply",
+        data={
+            "column": "artist_id",
+            "old_type": "varchar",
+            "new_type": "bigint",
+            "approve": "incident-source",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "recorded in the demo catalog, not sent to DataHub" in response.text
+    assert "written to DataHub" not in response.text
+
+
+def test_simulated_mode_never_claims_a_datahub_write(monkeypatch) -> None:
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
+
+    response = client.post(
+        "/writeback/apply",
+        data={
+            "column": "artist_id",
+            "old_type": "varchar",
+            "new_type": "bigint",
+            "approve": "docs-source",
+        },
+    )
+
+    assert "SIMULATED" in response.text
+    assert "not sent to DataHub" in response.text

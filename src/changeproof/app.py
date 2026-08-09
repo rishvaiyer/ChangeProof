@@ -15,6 +15,7 @@ from .writeback import (
     WritebackUnavailableError,
     apply_approved,
     build_proposals,
+    writeback_mode,
 )
 
 PACKAGE_DIR = Path(__file__).parent
@@ -178,6 +179,7 @@ def _render(
             "proposals": build_proposals(analysis) if analysis else [],
             "writeback_error": writeback_error,
             "writeback_results": writeback_results or [],
+            "simulated_mode": writeback_mode() == "simulated",
         },
         status_code=status_code,
     )
