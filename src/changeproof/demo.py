@@ -4,11 +4,15 @@ from pathlib import Path
 from .classifier import classify_schema_change
 from .impact import assess_impact
 from .models import (
+    AiReview,
+    ArtifactBundle,
     ChangeRequest,
     ImpactAssessment,
     LineageNode,
     MetadataEvidence,
+    RegionExposure,
     RemediationPlan,
+    SqlDependency,
 )
 from .planner import plan_remediation
 
@@ -16,7 +20,11 @@ PLATFORM = "urn:li:dataset:(urn:li:dataPlatform:dbt,sonicledger.models"
 
 
 def _urn(layer: str, name: str) -> str:
-    return f"{PLATFORM}.{layer}.{name},PROD)"
+    return _urn_for("sonicledger.models", layer, name)
+
+
+def _urn_for(platform_name: str, layer: str, name: str) -> str:
+    return f"urn:li:dataset:(urn:li:dataPlatform:dbt,{platform_name}.{layer}.{name},PROD)"
 
 
 SOURCE_URN = _urn("staging", "stg_streams")
@@ -33,6 +41,12 @@ class DemoAnalysis:
     impact: ImpactAssessment
     plan: RemediationPlan
     evidence_source: str
+    company_name: str = "SonicLedger"
+    platform_name: str = "sonicledger.models"
+    sql_dependencies: tuple[SqlDependency, ...] = ()
+    region_exposures: tuple[RegionExposure, ...] = ()
+    artifacts: ArtifactBundle | None = None
+    ai_review: AiReview | None = None
 
     @property
     def source_table(self) -> str:
@@ -49,7 +63,7 @@ class DemoAnalysis:
 
 @dataclass(frozen=True)
 class DemoColumn:
-    """One explorable column in the bundled SonicLedger catalog."""
+    """One explorable column in the synthetic enterprise catalog."""
 
     column: str
     source_table: str
@@ -60,13 +74,15 @@ class DemoColumn:
     blurb: str
     owners: list[str]
     downstream: list[LineageNode]
+    company_name: str = "SonicLedger"
+    platform_name: str = "sonicledger.models"
     column_lineage_available: bool = True
     metadata_age_hours: float = 0.0
     missing: tuple[str, ...] = ()
 
     @property
     def source_urn(self) -> str:
-        return _urn(self.source_layer, self.source_table)
+        return _urn_for(self.platform_name, self.source_layer, self.source_table)
 
 
 def _node(
@@ -77,9 +93,10 @@ def _node(
     critical: bool = False,
     owners: list[str] | None = None,
     fields: list[str] | None = None,
+    platform_name: str = "sonicledger.models",
 ) -> LineageNode:
     return LineageNode(
-        urn=_urn(layer, name),
+        urn=_urn_for(platform_name, layer, name),
         name=name,
         entity_type="dataset",
         hop=hop,
@@ -90,6 +107,50 @@ def _node(
 
 
 CATALOG: dict[str, DemoColumn] = {
+    "customer_id": DemoColumn(
+        column="customer_id",
+        source_table="stg_orders",
+        source_layer="staging",
+        source_file="models/staging/stg_orders.sql",
+        old_type="varchar",
+        new_type="bigint",
+        blurb="National order identity change across loyalty, returns, and finance.",
+        owners=["commerce-data@astervale.demo"],
+        company_name="AsterVale Living",
+        platform_name="astervale.models",
+        downstream=[
+            _node(
+                "fct_order_sales",
+                hop=1,
+                fields=["customer_id"],
+                owners=["commerce-analytics@astervale.demo"],
+                platform_name="astervale.models",
+            ),
+            _node(
+                "loyalty_customer_value",
+                hop=2,
+                critical=True,
+                fields=["customer_id"],
+                owners=["loyalty-platform@astervale.demo"],
+                platform_name="astervale.models",
+            ),
+            _node(
+                "regional_returns",
+                hop=2,
+                fields=["customer_id"],
+                owners=["store-operations@astervale.demo"],
+                platform_name="astervale.models",
+            ),
+            _node(
+                "executive_revenue_dashboard",
+                hop=3,
+                critical=True,
+                fields=["customer_id"],
+                owners=["finance-data@astervale.demo"],
+                platform_name="astervale.models",
+            ),
+        ],
+    ),
     # Full evidence: fresh column lineage, owners everywhere. Expect HIGH.
     "artist_id": DemoColumn(
         column="artist_id",
@@ -189,11 +250,18 @@ def catalog_options() -> list[DemoColumn]:
 
 
 def analyze_demo_change(*, column: str, old_type: str, new_type: str) -> DemoAnalysis:
+    entry = resolve_column(column)
     request = build_demo_request(column=column, old_type=old_type, new_type=new_type)
     return compose_analysis(
         request=request,
         evidence=_demo_evidence(column.strip()),
-        evidence_source="Bundled SonicLedger demo metadata",
+        evidence_source=(
+            "Bundled SonicLedger demo metadata"
+            if entry.company_name == "SonicLedger"
+            else f"Bundled {entry.company_name} DataHub metadata"
+        ),
+        company_name=entry.company_name,
+        platform_name=entry.platform_name,
     )
 
 
@@ -211,6 +279,11 @@ def build_demo_request(*, column: str, old_type: str, new_type: str) -> ChangeRe
     new_type = new_type.strip()
     if not old_type or not new_type or old_type == new_type:
         raise DemoInputError("Old and new types must be different non-empty values.")
+    if old_type != entry.old_type or new_type != entry.new_type:
+        raise DemoInputError(
+            f"Prepared transition for {entry.column} is "
+            f"{entry.old_type} to {entry.new_type}."
+        )
 
     return classify_schema_change(
         before_schema=[{"fieldPath": entry.column, "nativeDataType": old_type}],
@@ -221,7 +294,12 @@ def build_demo_request(*, column: str, old_type: str, new_type: str) -> ChangeRe
 
 
 def compose_analysis(
-    *, request: ChangeRequest, evidence: MetadataEvidence, evidence_source: str
+    *,
+    request: ChangeRequest,
+    evidence: MetadataEvidence,
+    evidence_source: str,
+    company_name: str = "SonicLedger",
+    platform_name: str = "sonicledger.models",
 ) -> DemoAnalysis:
     impact = assess_impact(evidence)
     return DemoAnalysis(
@@ -230,6 +308,8 @@ def compose_analysis(
         impact=impact,
         plan=plan_remediation(request, impact),
         evidence_source=evidence_source,
+        company_name=company_name,
+        platform_name=platform_name,
     )
 
 

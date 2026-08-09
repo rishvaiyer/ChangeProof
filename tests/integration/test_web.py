@@ -1,11 +1,21 @@
+import re
+
 import anyio
 from fastapi.testclient import TestClient
 
 from changeproof.app import app, create_app, provider_from_env
 from changeproof.demo import analyze_demo_change
+from changeproof.enterprise import analyze_enterprise_change
 from changeproof.live import analyze_live_change
 
 client = TestClient(app)
+
+
+def _analysis_token(path: str = "/datahub") -> str:
+    response = client.get(path)
+    match = re.search(r'name="analysis_token" value="([^"]+)"', response.text)
+    assert match is not None
+    return match.group(1)
 
 
 def test_healthz() -> None:
@@ -19,8 +29,8 @@ def test_dashboard_labels_demo_evidence() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "ChangeProof" in response.text
-    assert "Bundled SonicLedger demo metadata" in response.text
+    assert "contextIsKey" in response.text
+    assert "Bundled AsterVale Living DataHub metadata" in response.text
     assert 'href="/static/styles.css"' in response.text
 
 
@@ -119,7 +129,7 @@ def test_post_runs_sync_mcp_style_provider_outside_async_event_loop() -> None:
 def test_provider_from_env_defaults_to_bundled(monkeypatch) -> None:
     monkeypatch.delenv("CHANGE_PROOF_EVIDENCE_MODE", raising=False)
 
-    assert provider_from_env() is analyze_demo_change
+    assert provider_from_env() is analyze_enterprise_change
 
 
 def test_provider_from_env_selects_datahub(monkeypatch) -> None:
@@ -140,7 +150,7 @@ def test_provider_from_env_rejects_unknown_mode(monkeypatch) -> None:
 
 
 def test_dashboard_shows_writeback_drafts_and_the_approval_gate() -> None:
-    response = client.get("/")
+    response = client.get("/datahub")
 
     assert response.status_code == 200
     assert "Draft changes for DataHub" in response.text
@@ -152,7 +162,7 @@ def test_dashboard_shows_writeback_drafts_and_the_approval_gate() -> None:
 def test_writeback_requires_selecting_a_proposal() -> None:
     response = client.post(
         "/writeback/apply",
-        data={"column": "artist_id", "old_type": "varchar", "new_type": "bigint"},
+        data={"analysis_token": _analysis_token()},
     )
 
     assert response.status_code == 422
@@ -171,6 +181,7 @@ def test_writeback_refuses_when_no_datahub_is_reachable(monkeypatch) -> None:
             "old_type": "varchar",
             "new_type": "bigint",
             "approve": "incident-source",
+            "analysis_token": _analysis_token(),
         },
     )
 
@@ -178,18 +189,37 @@ def test_writeback_refuses_when_no_datahub_is_reachable(monkeypatch) -> None:
     assert "nothing was written" in response.text
 
 
-def test_writeback_validates_the_change_before_drafting() -> None:
+def test_writeback_ignores_forged_change_values(monkeypatch) -> None:
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
     response = client.post(
         "/writeback/apply",
         data={
             "column": "unknown",
-            "old_type": "varchar",
-            "new_type": "bigint",
-            "approve": "incident-source",
+            "old_type": "attacker_type",
+            "new_type": "attacker_type_2",
+            "approve": "docs-source",
+            "analysis_token": _analysis_token(),
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert "AsterVale Living" in response.text
+    assert "attacker_type" not in response.text
+
+
+def test_writeback_rejects_missing_or_tampered_analysis_token(monkeypatch) -> None:
+    monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
+
+    missing = client.post(
+        "/writeback/apply", data={"approve": "incident-source"}
+    )
+    tampered = client.post(
+        "/writeback/apply",
+        data={"approve": "incident-source", "analysis_token": "tampered"},
+    )
+
+    assert missing.status_code == 403
+    assert tampered.status_code == 403
 
 
 def test_static_assets_must_revalidate() -> None:
@@ -212,7 +242,7 @@ def test_html_responses_are_not_marked_no_cache() -> None:
 def test_simulated_mode_labels_the_flow_and_completes_it(monkeypatch) -> None:
     monkeypatch.setenv("CHANGE_PROOF_WRITEBACK_MODE", "simulated")
 
-    page = client.get("/")
+    page = client.get("/datahub")
     assert "SIMULATED" in page.text
     assert "No DataHub is connected" in page.text
 
@@ -223,6 +253,7 @@ def test_simulated_mode_labels_the_flow_and_completes_it(monkeypatch) -> None:
             "old_type": "varchar",
             "new_type": "bigint",
             "approve": "incident-source",
+            "analysis_token": _analysis_token(),
         },
     )
 
@@ -241,6 +272,7 @@ def test_simulated_mode_never_claims_a_datahub_write(monkeypatch) -> None:
             "old_type": "varchar",
             "new_type": "bigint",
             "approve": "docs-source",
+            "analysis_token": _analysis_token(),
         },
     )
 

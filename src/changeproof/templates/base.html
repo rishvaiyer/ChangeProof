@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="contextIsKey turns incident requirements into bounded DataHub evidence and reviewable SQL.">
+    <title>{% block title %}contextIsKey{% endblock %} · DataHub context layer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap">
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/{{ nav_query }}" aria-label="contextIsKey home">
+          <span class="brand-mark"><i></i><i></i><i></i></span>
+          <span><strong>contextIsKey</strong><small>DataHub context layer</small></span>
+        </a>
+
+        <div class="workspace-card">
+          <span class="workspace-icon">CP</span>
+          <span><small>Enterprise workspace</small><strong>{{ analysis.company_name if analysis else "AsterVale Living" }}</strong></span>
+          <i class="live-dot" title="Demo active"></i>
+        </div>
+
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <p>Workspace</p>
+          <a href="/{{ nav_query }}"{% if page == "analyze" %} class="active" aria-current="page"{% endif %}><span>⌁</span>Analyze</a>
+          <a href="/impact{{ nav_query }}"{% if page == "impact" %} class="active" aria-current="page"{% endif %}><span>⌘</span>Impact graph</a>
+          <a href="/regions{{ nav_query }}"{% if page == "regions" %} class="active" aria-current="page"{% endif %}><span>◎</span>Regions</a>
+          <a href="/fixes{{ nav_query }}"{% if page == "fixes" %} class="active" aria-current="page"{% endif %}><span>✦</span>Fix studio</a>
+          <a href="/rollout{{ nav_query }}"{% if page == "rollout" %} class="active" aria-current="page"{% endif %}><span>↗</span>Rollout</a>
+          <p>Catalog</p>
+          <a href="/datahub{{ nav_query }}"{% if page == "datahub" %} class="active" aria-current="page"{% endif %}><span>◇</span>DataHub actions</a>
+          <a href="/triage"{% if page == "triage" %} class="active" aria-current="page"{% endif %}><span>⌗</span>Triage composer</a>
+        </nav>
+
+        <div class="sidebar-status">
+          <span class="status-orb"></span>
+          <div><strong>Evidence online</strong><small>Deterministic demo</small></div>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="breadcrumb"><span>{{ analysis.company_name if analysis else "contextIsKey" }}</span><b>/</b>{% block breadcrumb %}Change intelligence{% endblock %}</div>
+          <div class="topbar-actions">
+            <span class="evidence-badge"><i></i>{% if page == "triage" %}Bundled DataHub context{% else %}{{ analysis.evidence_source if analysis else "Evidence unavailable" }}{% endif %}</span>
+            <a class="avatar" href="/datahub{{ nav_query }}" aria-label="Open DataHub actions">RI</a>
+          </div>
+        </header>
+
+        <div class="page-wrap">
+          {% if error %}<div class="alert alert-error" role="alert"><strong>Analysis unavailable</strong><span>{{ error }}</span></div>{% endif %}
+          {% block content %}{% endblock %}
+          {% if page != "triage" and analysis and analysis.artifacts %}
+          <section class="export-panel" aria-labelledby="export-title">
+            <div class="export-heading"><div><span class="kicker"><i></i>TAKE IT WITH YOU</span><h2 id="export-title">Download all results</h2><p>Choose a ready-to-share text or PDF export for the full bundle or any individual result.</p></div><div class="export-bundle"><a class="button button-primary" href="/exports/all-results.txt{{ nav_query }}">TXT bundle ↓</a><a class="button button-secondary" href="/exports/all-results.pdf{{ nav_query }}">PDF bundle ↓</a></div></div>
+            <div class="export-grid">
+              {% for item in artifact_exports %}
+              <article class="export-item"><div><strong>{{ item.name }}</strong><small>{{ item.description }}</small></div><span><a href="/exports/{{ item.artifact_name }}.txt{{ nav_query }}">TXT</a><a href="/exports/{{ item.artifact_name }}.pdf{{ nav_query }}">PDF</a></span></article>
+              {% endfor %}
+            </div>
+          </section>
+          {% endif %}
+          <footer>
+            <span><strong>contextIsKey</strong> · DataHub context layer · Apache-2.0</span>
+            <span>Made by <strong>Rishva Iyer</strong> · Built for the DataHub Agent Hackathon</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

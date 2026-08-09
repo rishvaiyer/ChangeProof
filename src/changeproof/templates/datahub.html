@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}DataHub Actions{% endblock %}
+{% block breadcrumb %}DataHub actions{% endblock %}
+{% block content %}
+<section class="page-heading heading-row">
+  <div><span class="kicker"><i></i>CATALOG DECISION WORKFLOW</span><h1>DataHub Actions</h1><p>Turn analysis into visible catalog context through explicit, item-level human approval.</p></div>
+  <span class="environment-chip"><i></i>{% if simulated_mode %}SIMULATED WRITEBACK{% else %}DATAHUB GRAPHQL{% endif %}</span>
+</section>
+
+{% if analysis %}
+<section class="datahub-hero">
+  <div class="datahub-mark">◇</div><div><small>DATAHUB OPERATIONAL GRAPH</small><h2>Draft changes for DataHub</h2><p>contextIsKey rebuilds every approved proposal on the server. Browser input never controls catalog content.</p></div><span class="approval-lock">⌾ Nothing is written without approval</span>
+</section>
+
+{% if simulated_mode %}<div class="alert alert-warning"><span class="sim-badge">SIMULATED</span><span>No DataHub is connected to this hosted demo. Approval records an entry in the local demo catalog, not DataHub. The same gate uses real GraphQL through <code>make live-demo</code>.</span></div>{% endif %}
+{% if writeback_error %}<div class="alert alert-error" role="alert"><strong>Write-back stopped</strong><span>{{ writeback_error }}</span></div>{% endif %}
+{% if writeback_results %}<div class="result-stack">{% for result in writeback_results %}<div class="write-result{% if result.applied %} success{% else %} failure{% endif %}"><span>{% if result.applied %}✓{% else %}!{% endif %}</span><div><strong>{{ result.action.value if result.action else "unknown" }}</strong><p>{% if result.applied %}{% if result.simulated %}recorded in the demo catalog, not sent to DataHub{% else %}written to DataHub{% endif %}{% else %}failed: {{ result.error }}{% endif %}</p></div>{% if result.simulated %}<b>SIMULATED</b>{% endif %}</div>{% endfor %}</div>{% endif %}
+
+<form class="proposal-form" action="/writeback/apply" method="post">
+  <input type="hidden" name="analysis_token" value="{{ analysis_token }}">
+  <input type="hidden" name="column" value="{{ values.get('column', 'customer_id') }}">
+  <input type="hidden" name="old_type" value="{{ values.get('old_type', 'varchar') }}">
+  <input type="hidden" name="new_type" value="{{ values.get('new_type', 'bigint') }}">
+  <div class="proposal-toolbar"><div><span class="section-index">01</span><h2>Approval queue</h2><p>{{ proposals | length }} server-authored proposals</p></div><span class="safe-badge">SELECT ITEMS TO APPLY</span></div>
+  <div class="proposal-grid">
+    {% for proposal in proposals %}
+    <label class="proposal-card">
+      <input type="checkbox" name="approve" value="{{ proposal.proposal_id }}">
+      <span class="checkmark">✓</span>
+      <span class="proposal-type">{{ proposal.action.value | replace("_", " ") | upper }}</span>
+      <strong>{{ proposal.title }}</strong>
+      <small>Target · {{ proposal.target_name }}</small>
+      <p>{{ proposal.rationale }}</p>
+      <details><summary>Preview catalog payload</summary><pre>{{ proposal.body }}</pre></details>
+    </label>
+    {% endfor %}
+  </div>
+  <div class="approval-bar"><div><span class="lock-icon">⌾</span><p><strong>Human approval gate</strong><small>Only selected IDs are accepted. Content is recomputed server-side.</small></p></div><button class="button button-primary" type="submit">Approve and write back <span>↗</span></button></div>
+</form>
+{% endif %}
+{% endblock %}

@@ -19,6 +19,9 @@ dependencies = [
   "openai",
   "pydantic",
   "pydantic-settings",
+  "pypdf",
+  "python-multipart",
+  "reportlab",
   "sqlglot",
   "typer",
   "uvicorn",
@@ -39,7 +42,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-changeproof = ["templates/*.html", "static/*.css"]
+changeproof = ["templates/*.html", "static/*.css", "static/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

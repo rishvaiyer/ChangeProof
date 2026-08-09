@@ -14,4 +14,6 @@ def analyze_live_change(*, column: str, old_type: str, new_type: str) -> DemoAna
         request=request,
         evidence=evidence,
         evidence_source="Live DataHub MCP evidence",
+        company_name=entry.company_name,
+        platform_name=entry.platform_name,
     )

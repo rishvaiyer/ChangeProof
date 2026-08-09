@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChangeProof predicts downstream data impact and proposes a safer rollout.">
-    <title>ChangeProof · Safe schema changes</title>
+    <meta name="description" content="contextIsKey predicts downstream data impact and proposes a safer rollout.">
+    <title>contextIsKey · Safe schema changes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&display=swap">
@@ -15,9 +15,9 @@
     <div class="glow glow-two"></div>
     <main>
       <nav>
-        <a class="brand" href="/" aria-label="ChangeProof home">
+        <a class="brand" href="/" aria-label="contextIsKey home">
           <span class="brand-mark">CP</span>
-          <span>ChangeProof</span>
+          <span>contextIsKey</span>
         </a>
         <span class="evidence-badge"><i></i> {{ analysis.evidence_source if analysis else "Live evidence unavailable" }}</span>
       </nav>
@@ -25,7 +25,7 @@
       <header class="hero">
         <p class="eyebrow">DATA CONTRACT INTELLIGENCE</p>
         <h1>Know what breaks.<br><span>Ship the safe change.</span></h1>
-        <p class="lede">ChangeProof traces a proposed schema edit through DataHub lineage, identifies every exposed consumer, and builds a staged remediation plan before production feels it.</p>
+        <p class="lede">contextIsKey traces a proposed schema edit through DataHub lineage, identifies every exposed consumer, and builds a staged remediation plan before production feels it.</p>
       </header>
 
       <section class="analyzer" aria-labelledby="analyzer-title">
@@ -173,7 +173,7 @@
             </div>
             <span class="scenario">Nothing is written without approval</span>
           </div>
-          <p class="solution-summary">ChangeProof drafts these entries and stops. Approving sends only the selected items, rebuilt on the server, to DataHub.</p>
+          <p class="solution-summary">contextIsKey drafts these entries and stops. Approving sends only the selected items, rebuilt on the server, to DataHub.</p>
 
           {% if simulated_mode %}
           <p class="sim-note"><span class="sim-badge">SIMULATED</span> No DataHub is connected to this hosted demo, so approving records the entry in a local demo catalog and shows you exactly what would be sent. The same approval runs against a real DataHub via <code>make live-demo</code>.</p>
@@ -219,7 +219,7 @@
       {% endif %}
 
       <footer>
-        <span>ChangeProof</span>
+        <span>contextIsKey</span>
         <p>Deterministic hosted demo · Live DataHub MCP adapter verified locally</p>
       </footer>
     </main>

@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 
 from changeproof.demo import (
+    CATALOG,
     analyze_demo_change,
     build_demo_request,
     compose_analysis,
@@ -23,6 +24,30 @@ def test_analyze_demo_type_change_returns_impact_and_safe_plan() -> None:
     assert result.plan.strategy == "parallel_typed_field"
     assert result.plan.rollout_steps
     assert result.evidence_source == "Bundled SonicLedger demo metadata"
+    assert result.company_name == "SonicLedger"
+    assert result.sql_dependencies == ()
+    assert result.region_exposures == ()
+
+
+def test_customer_id_is_the_astervale_enterprise_scenario() -> None:
+    entry = CATALOG["customer_id"]
+
+    assert entry.company_name == "AsterVale Living"
+    assert entry.source_table == "stg_orders"
+    assert entry.source_urn.startswith(
+        "urn:li:dataset:(urn:li:dataPlatform:dbt,astervale.models."
+    )
+
+    result = analyze_demo_change(
+        column="customer_id", old_type="varchar", new_type="bigint"
+    )
+    assert result.company_name == "AsterVale Living"
+    assert [asset.name for asset in result.impact.impacted_assets] == [
+        "fct_order_sales",
+        "loyalty_customer_value",
+        "regional_returns",
+        "executive_revenue_dashboard",
+    ]
 
 
 def test_analyze_demo_rejects_unknown_column() -> None:
@@ -38,6 +63,13 @@ def test_build_demo_request_validates_and_classifies_type_change() -> None:
     assert request.change_type is ChangeType.COLUMN_TYPE_CHANGE
     assert request.old_type == "varchar"
     assert request.new_type == "bigint"
+
+
+def test_build_demo_request_rejects_an_unprepared_transition() -> None:
+    with pytest.raises(ValueError, match="Prepared transition"):
+        build_demo_request(
+            column="customer_id", old_type="varchar", new_type="nvarchar(max)"
+        )
 
 
 def test_compose_analysis_uses_supplied_evidence(

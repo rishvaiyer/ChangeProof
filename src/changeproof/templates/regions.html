@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Regional Exposure{% endblock %}
+{% block breadcrumb %}Regions{% endblock %}
+{% block content %}
+<section class="page-heading heading-row">
+  <div><span class="kicker"><i></i>GEOGRAPHIC CHANGE INTELLIGENCE</span><h1>Regional Exposure</h1><p>Connect the <code>{{ analysis.evidence.source_field if analysis else "proposed field" }}</code> change to operating regions, accountable owners, and review flags.</p></div>
+  <span class="environment-chip"><i></i>NATIONAL RETAIL · USA</span>
+</section>
+
+{% if analysis %}
+{% if analysis.region_exposures %}
+<section class="region-layout">
+  <article class="panel map-panel">
+    <div class="panel-heading"><div><span class="section-index">01</span><h2>Enterprise exposure map</h2><p>Synthetic operating footprint, grouped by DataHub structured properties.</p></div><span class="safe-badge">5 REGION GROUPS</span></div>
+    <div class="region-map" aria-label="Stylized regional exposure map">
+      {% for region in analysis.region_exposures %}
+      {% if region.region != "UNKNOWN" %}
+      <div class="map-region map-{{ region.region | lower }} risk-{{ region.risk.value | lower }}">
+        <span>{{ region.region }}</span><strong>{{ region.asset_names | length + region.sql_objects | length }}</strong><small>touchpoints</small>
+      </div>
+      {% endif %}
+      {% endfor %}
+      <div class="map-center"><span>{{ analysis.company_name | upper }}</span><strong>420</strong><small>stores</small></div>
+    </div>
+    <div class="map-legend"><span><i class="risk-dot high"></i>High coordination</span><span><i class="risk-dot medium"></i>Managed exposure</span><span><i class="risk-dot review"></i>Metadata review</span></div>
+  </article>
+
+  <aside class="panel exposure-summary">
+    <div class="panel-heading"><div><span class="section-index">02</span><h2>Risk distribution</h2></div></div>
+    {% for region in analysis.region_exposures %}
+    <div class="exposure-bar">
+      <div><strong>{{ region.region }}</strong><span>{{ region.risk.value }}</span></div>
+      <div class="bar-track"><i class="bar-{{ region.risk.value | lower }}" style="width: {{ 22 + ((region.asset_names | length + region.sql_objects | length) * 11) }}%"></i></div>
+      <small>{{ region.asset_names | length }} assets · {{ region.sql_objects | length }} SQL objects</small>
+    </div>
+    {% endfor %}
+  </aside>
+</section>
+
+<section class="panel region-table-panel">
+  <div class="panel-heading"><div><span class="section-index">03</span><h2>Owner coordination matrix</h2><p>Every region includes the exact evidence and metadata flags driving its status.</p></div><a class="button button-secondary" href="/artifacts/impact-report.json{{ nav_query }}">Export JSON</a></div>
+  <div class="region-table" role="table" aria-label="Regional exposure details">
+    <div class="region-row region-header" role="row"><span>Region</span><span>Exposed assets</span><span>SQL consumers</span><span>Owners</span><span>Flags</span></div>
+    {% for region in analysis.region_exposures %}
+    <article class="region-row" role="row">
+      <span><i class="risk-dot {{ region.risk.value | lower }}"></i><strong>{{ region.region }}</strong><b>{{ region.risk.value }}</b></span>
+      <span>{% if region.asset_names %}{{ region.asset_names | join(", ") }}{% else %}<em>No catalog asset mapped</em>{% endif %}</span>
+      <span>{% if region.sql_objects %}{{ region.sql_objects | join(", ") }}{% else %}<em>No module mapped</em>{% endif %}</span>
+      <span>{% if region.owners %}{{ region.owners | join(", ") }}{% else %}<em>Owner required</em>{% endif %}</span>
+      <span class="flag-list">{% for flag in region.policy_flags %}<code>{{ flag }}</code>{% endfor %}</span>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="next-step-card coral"><div><span>Decision</span><h2>Generate the fixes and controls.</h2><p>Move from impact evidence to reviewable SQL, validation, and rollback artifacts.</p></div><a class="button button-primary" href="/fixes{{ nav_query }}">Open Fix Studio →</a></section>
+{% else %}
+<section class="panel empty-state"><strong>No regional metadata is bundled for this scenario</strong><p>The live SonicLedger path currently verifies DataHub schema and lineage only. contextIsKey does not infer geography when structured properties are absent.</p></section>
+{% endif %}
+{% endif %}
+{% endblock %}
