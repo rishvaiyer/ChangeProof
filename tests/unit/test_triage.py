@@ -72,6 +72,20 @@ def test_running_balance_excludes_order_total_and_keeps_order_comparison_separat
     assert "UNION ALL SELECT event_id, customer_id, event_at, amount, 'REFUND'" in result.sql
 
 
+def test_order_comparison_uses_order_id_and_feeds_final_mismatch_results():
+    result = build_triage_result(SAMPLE_INCIDENT_QUESTION, SAMPLE_SRS_TEXT)
+    finance_rule = next(rule for rule in result.rules if rule.domain == "Finance")
+
+    assert "order_id" in finance_rule.columns
+    assert "a.order_id AS order_id" in result.sql
+    assert "LEFT JOIN invoice_events AS a ON a.order_id = o.order_id" in result.sql
+    assert "order_invoice_mismatches AS (" in result.sql
+    assert "'ORDER_INVOICE_MISMATCH' AS event_type" in result.sql
+    assert "FROM order_comparison" in result.sql
+    assert "final_results AS (" in result.sql
+    assert "UNION ALL" in result.sql.split("final_results AS (", 1)[1]
+
+
 def test_more_than_twenty_rules_is_rejected():
     requirements = "\n".join(f"Unknown rule {index}" for index in range(21))
 

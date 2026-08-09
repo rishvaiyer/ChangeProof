@@ -72,7 +72,7 @@ CATALOG = (
     _CatalogEntry(
         "Finance",
         "finance.ar_transactions",
-        ("transaction_id", "invoice_id", "customer_id", "amount", "posted_at"),
+        ("transaction_id", "invoice_id", "order_id", "customer_id", "amount", "posted_at"),
         "Accounts Receivable",
         "AR transaction",
         ("invoice", "invoices", "receivable", "ar balance", "ar", "finance"),
@@ -264,7 +264,8 @@ WITH customer_scope AS (
     JOIN customer_scope AS c ON c.customer_id = o.customer_id
 ), invoice_events AS (
     -- DataHub operation: read lineage from orders to finance.ar_transactions.
-    SELECT a.invoice_id AS event_id, a.customer_id, a.posted_at AS event_at, a.amount
+    SELECT a.invoice_id AS event_id, a.order_id AS order_id, a.customer_id,
+           a.posted_at AS event_at, a.amount
     FROM finance.ar_transactions AS a
     JOIN customer_scope AS c ON c.customer_id = a.customer_id
 ), order_comparison AS (
@@ -272,7 +273,7 @@ WITH customer_scope AS (
     SELECT o.order_id, o.customer_id, o.event_at AS ordered_at, o.amount AS order_total,
            a.amount AS invoice_amount
     FROM order_events AS o
-    LEFT JOIN invoice_events AS a ON a.customer_id = o.customer_id
+    LEFT JOIN invoice_events AS a ON a.order_id = o.order_id
 ), payment_events AS (
     -- DataHub operation: inspect payments.settlements schema and ownership.
     SELECT s.settlement_id AS event_id, a.customer_id, s.settled_at AS event_at,
@@ -304,9 +305,22 @@ WITH customer_scope AS (
     SELECT customer_id, event_id, event_type, event_at, amount, running_balance
     FROM running_balance
     WHERE running_balance < 0 OR amount IS NULL
+), order_invoice_mismatches AS (
+    SELECT customer_id, order_id AS event_id, 'ORDER_INVOICE_MISMATCH' AS event_type,
+           ordered_at AS event_at,
+           order_total - COALESCE(invoice_amount, CAST(0 AS decimal(18, 2))) AS amount,
+           CAST(NULL AS decimal(18, 2)) AS running_balance
+    FROM order_comparison
+    WHERE invoice_amount IS NULL OR order_total <> invoice_amount
+), final_results AS (
+    SELECT customer_id, event_id, event_type, event_at, amount, running_balance
+    FROM reconciliation_exceptions
+    UNION ALL
+    SELECT customer_id, event_id, event_type, event_at, amount, running_balance
+    FROM order_invoice_mismatches
 )
 SELECT e.*, c.customer_region
-FROM reconciliation_exceptions AS e
+FROM final_results AS e
 JOIN customer_scope AS c ON c.customer_id = e.customer_id
 ORDER BY e.customer_id, e.event_at, e.event_id;
 """
