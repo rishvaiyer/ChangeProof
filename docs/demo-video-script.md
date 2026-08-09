@@ -8,7 +8,7 @@ Target length: 2 minutes 55 seconds. Do one confident take and stay under 3 minu
 - Use a 1280 by 800 browser window at 100 percent zoom.
 - Open `/triage`, `/impact`, `/regions`, `/fixes`, and `/datahub` in advance.
 - Confirm the AI review button is visible and hosted write-back says `SIMULATED`.
-- Keep the bundled `src/changeproof/static/astervale-ar-incident-srs.txt` ready to upload.
+- Keep `docs/examples/astervale-ar-incident-srs.txt` ready to upload. The same text is also bundled for the **Load example** button.
 
 ## 0:00 to 0:15 — the problem
 

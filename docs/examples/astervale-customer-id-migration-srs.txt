@@ -1,0 +1,10 @@
+# AsterVale Living customer ID contract migration SRS
+
+The commerce platform will migrate customer_id from varchar to bigint.
+The migration must identify every dataset and SQL module that compares, casts, joins, or filters customer_id.
+Customer identity remains the source of truth for account matching and regional scope.
+Finance reconciliation must preserve invoice and payment joins during the transition.
+Returns and refunds must continue to match orders without truncation or implicit conversion.
+Dashboards and downstream models must be checked for incompatible type assumptions.
+The investigation must separate verified convert and cast fixes from joins that require manual review.
+The rollout plan must include validation queries, an ordered migration, and a rollback path.

@@ -23,7 +23,7 @@ That looks like one database edit. The product shows why it is not one edit. The
 
 ## What happens in the demo
 
-1. Upload or load an SRS about an accounts-receivable discrepancy.
+1. Upload or load the main AsterVale accounts-receivable SRS from [`docs/examples/`](examples/).
 2. Map each requirement to a dataset, column, owner, domain, and glossary term.
 3. Show the numbered context trail: search, schema, entity, lineage, and query-history decisions.
 4. Build a chronological SQL investigation across multiple functional areas.
