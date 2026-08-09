@@ -33,6 +33,13 @@ AsterVale Living operates a national retail business. Its AR balance can be affe
 - Railway uses clearly labelled bundled synthetic DataHub-shaped metadata.
 - The existing opt-in local DataHub mode remains the path for real MCP schema and lineage calls. Metadata categories not exposed by the pinned MCP server can use DataHub APIs in a later production integration.
 
+## Context-management framing
+
+- **Relevance:** select only task-specific domains, assets, columns, timestamps, owners, and glossary terms.
+- **Reliability:** show provenance and uncertainty for every query decision; produce no asset SQL when no rule maps.
+- **Retention:** package the decision for download and approval-gated DataHub write-back. Label this as handoff-ready rather than claiming a persistent cross-incident memory system.
+- Run in observation mode: recommend and explain, but never execute generated SQL automatically.
+
 ## Query shape
 
 The sample query uses SQL Server syntax and includes independently readable CTEs for customer scope, order events, invoice events, payment events, return/refund events, fulfillment events, a normalized event stream, a running balance, and reconciliation exceptions. Every source CTE contains a comment naming the DataHub evidence operation that justified it.

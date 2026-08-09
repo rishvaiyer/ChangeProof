@@ -113,9 +113,10 @@ def test_triage_exports(format, content_type):
 - [ ] **Step 3: Register the template and routes, reuse `pdf_bytes`, validate export format before running generation, and keep all processing stateless.**
 - [ ] **Step 4: Build the accessible page with local file reading, example loading, mapping table, domain summary, DataHub touchpoint cards, readable SQL, warnings, and SQL/TXT/PDF submit buttons.**
 - [ ] **Step 5: Add an explicit AI review button only when the key is available; state that extracted rule mappings are sent to OpenAI and render the review as advisory without changing deterministic evidence.**
-- [ ] **Step 6: Add responsive orange/blue/white styles with body and code text no smaller than 13px in primary result areas.**
-- [ ] **Step 7: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
-- [ ] **Step 8: Commit Task 3 files with `feat: add SRS triage composer experience`.**
+- [ ] **Step 6: Add a compact Relevance / Reliability / Retention explainer. Label Retention as handoff-ready through downloads and approval-gated write-back, not persistent cross-incident memory.**
+- [ ] **Step 7: Add responsive orange/blue/white styles with body and code text no smaller than 13px in primary result areas.**
+- [ ] **Step 8: Run `uv run pytest tests/integration/test_enterprise_web.py -q` and confirm all integration tests pass.**
+- [ ] **Step 9: Commit Task 3 files with `feat: add SRS triage composer experience`.**
 
 ### Task 4: Judge narrative and full verification
 
@@ -131,5 +132,6 @@ def test_triage_exports(format, content_type):
 - [ ] **Step 1: Update the README feature list and judge demo path with `/triage` first, preserving the synthetic-hosted versus real-local boundary.**
 - [ ] **Step 2: Add a 45–60 second Triage Composer segment to the video script: upload SRS, show six domains, show repeated DataHub touchpoints, reveal generated SQL, download evidence.**
 - [ ] **Step 3: Update judging positioning with the sentence: “DataHub supplies the enterprise context; ChangeProof composes the investigation and proves where every input came from.”**
-- [ ] **Step 4: Run `uv run ruff check .` and `uv run pytest -q`; resolve any failures.**
-- [ ] **Step 5: Commit Task 4 files with `docs: add triage composer judge story`.**
+- [ ] **Step 4: Explain the Context Management three Rs honestly: Relevance and Reliability are implemented; Retention is handoff-ready through exports/write-back rather than persistent agent memory.**
+- [ ] **Step 5: Run `uv run ruff check .` and `uv run pytest -q`; resolve any failures.**
+- [ ] **Step 6: Commit Task 4 files with `docs: add triage composer judge story`.**
