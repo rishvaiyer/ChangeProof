@@ -1,12 +1,49 @@
+<div align="center">
+
 # contextIsKey
+
+### Context before action.
+
+**Turn an SRS or incident brief into a grounded, chronological investigation—before a schema change becomes an outage.**
+
+[![Live demo](https://img.shields.io/badge/Live_demo-Railway-0b7a75?style=for-the-badge)](https://changeproof-production.up.railway.app/triage)
+[![DataHub MCP](https://img.shields.io/badge/DataHub-MCP_context-ff7a45?style=for-the-badge)](https://docs.datahub.com/docs/features/feature-guides/mcp)
+[![License](https://img.shields.io/badge/License-Apache--2.0-1f2937?style=for-the-badge)](LICENSE)
 
 **DataHub supplies the enterprise context. contextIsKey turns it into a reviewable investigation.**
 
-contextIsKey maps incident requirements to DataHub assets and columns, composes a cross-domain chronological SQL investigation, traces proposed schema changes through hidden SQL and geographic exposure, and packages fixes behind human review.
+[Open the live demo](https://changeproof-production.up.railway.app/triage) · [Watch the judge flow](#judge-flow) · [Read the architecture](#architecture) · [Meet the creator](#creator)
 
-[Existing public deployment](https://changeproof-production.up.railway.app/) · [Repository](https://github.com/rishvaiyer/ChangeProof) · [Apache-2.0 license](LICENSE)
+</div>
 
-> The public Railway demo uses deterministic synthetic DataHub-shaped context for speed and reliability. The repository also includes an opt-in integration verified against a local DataHub instance through the official MCP server.
+> **Demo note:** The public Railway demo uses deterministic synthetic DataHub-shaped context for speed and reliability. The repository also includes an opt-in integration verified against a local DataHub instance through the official MCP server. No fake cloud connection is claimed.
+
+## The problem in one sentence
+
+An AI can write a plausible SQL query in seconds. It cannot safely change an enterprise identifier until it knows which columns, owners, dashboards, stored procedures, business rules, and regions depend on that identifier.
+
+## What contextIsKey does
+
+```text
+SRS / incident brief
+        ↓
+DataHub context: search · schema · entities · lineage · query history
+        ↓
+Bounded rule-to-asset mapping + chronological SQL investigation
+        ↓
+Impact graph · hidden SQL consumers · regional exposure
+        ↓
+Reviewable fixes · validation · rollback · rollout gates
+```
+
+### Judge-at-a-glance
+
+| Proof point | What the demo shows |
+| --- | --- |
+| **Depth of DataHub usage** | Repeated, named context lookups for datasets, columns, owners, glossary terms, lineage, entities, and query history. |
+| **Technical execution** | Document extraction, deterministic mapping, SQL module discovery, impact graph, exports, SARIF, and an optional grounded AI review. |
+| **Real-world usefulness** | A cross-functional accounts-receivable incident spanning Commerce, Finance, Payments, Returns, Fulfillment, Identity, and Regional Policy. |
+| **Trust and safety** | No automatic SQL execution, no silent AI changes, explicit unmapped rules, human approval, rollback controls, and honest evidence labels. |
 
 ## Judge flow
 
@@ -28,6 +65,18 @@ Start with the included accounts-receivable incident, then visit seven focused w
 6. **Rollout:** follow a dependency-ordered migration with explicit gates.
 7. **DataHub actions:** approve individual incident, tag, and documentation drafts.
 
+## 90-second judge path
+
+1. Open the [Triage Composer](https://changeproof-production.up.railway.app/triage).
+2. Click **Load example** or upload the included SRS-style incident brief.
+3. Point out the **Context graph coverage** cards: the app names the context types that shaped the result.
+4. Scroll to **How DataHub context helped—step by step**. Each lookup explains how metadata changed the query.
+5. Open **Impact graph** to show DataHub lineage plus the four hidden SQL Server consumers.
+6. Open **Regions** to turn technical dependencies into an executive risk view.
+7. Finish in **Fix Studio**: download the query, proposed fixes, validation SQL, rollback SQL, JSON, or SARIF.
+
+The story is intentionally simple: **a type change is not a SQL edit; it is a context problem.**
+
 ### Upload any SRS or incident document
 
 Open `/triage` and either paste requirements or upload a PDF, DOCX, TXT, Markdown, SQL, or CSV file. contextIsKey extracts the text for the current response, shows a document receipt, and lets you review the extracted requirements before clicking **Interpret document with AI**.
@@ -42,19 +91,26 @@ The original binary is discarded after extraction. OpenAI receives extracted tex
 
 ## Live judge surfaces
 
-The UI is designed to make the context chain visible at a glance:
+The UI is designed to make the context chain visible at a glance—not hide it behind a chat transcript.
 
-![Triage Composer](docs/screenshots/contextiskey-triage.jpg)
-*Document upload, extracted SRS rules, privacy boundary, and DataHub-shaped context.*
-
-![Impact graph](docs/screenshots/contextiskey-impact.jpg)
-*Column-level lineage joins observed DataHub relationships to hidden SQL consumers.*
-
-![Regional exposure](docs/screenshots/contextiskey-regions.jpg)
-*Synthetic enterprise geography turns technical impact into an operating-risk view.*
-
-![Fix Studio](docs/screenshots/contextiskey-fixes.jpg)
-*Reviewable SQL drafts, manual-review flags, and no-auto-execution controls.*
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/contextiskey-triage.jpg" alt="Triage Composer with uploaded SRS document" /></td>
+    <td width="50%"><img src="docs/screenshots/contextiskey-impact.jpg" alt="DataHub lineage and hidden SQL consumer graph" /></td>
+  </tr>
+  <tr>
+    <td><strong>Triage Composer</strong><br />Document upload, extracted SRS rules, privacy boundary, and DataHub-shaped context.</td>
+    <td><strong>Impact graph</strong><br />Column-level lineage joined to hidden SQL consumers that catalog graphs cannot always observe.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/contextiskey-regions.jpg" alt="Regional exposure map" /></td>
+    <td width="50%"><img src="docs/screenshots/contextiskey-fixes.jpg" alt="Fix Studio with generated SQL drafts" /></td>
+  </tr>
+  <tr>
+    <td><strong>Regional exposure</strong><br />Technical blast radius translated into an operating-risk view across five region groups.</td>
+    <td><strong>Fix Studio</strong><br />Reviewable SQL drafts, manual-review flags, rollback artifacts, and no-auto-execution controls.</td>
+  </tr>
+</table>
 
 ## Enterprise scenario
 
@@ -108,6 +164,19 @@ contextIsKey adds the incident and change decision layer:
 - Dependency-ordered rollout and rollback
 - Explicit AI second-pass review
 - Human-approved DataHub write-back
+
+### Exactly where the DataHub context appears
+
+| DataHub capability | How contextIsKey uses it | Visible proof in the demo |
+| --- | --- | --- |
+| **Search** | Finds the best matching assets across functional domains from each SRS rule. | Triage mappings and the numbered evidence timeline. |
+| **Schema fields** | Confirms the candidate column and its neighboring fields before composing SQL. | Selected columns and schema evidence on Triage Composer. |
+| **Entities** | Reads ownership, domain, glossary, criticality, and structured metadata together. | Owner/domain/glossary rows and the Regional Exposure view. |
+| **Lineage** | Walks upstream/downstream dependencies and hop distance from the proposed field. | Impact graph and critical downstream assets. |
+| **Dataset query history** | Adds real query patterns so the investigation can find consumers beyond declared lineage. | Chronological SQL investigation and query-history step. |
+| **Governed write-back** | Prepares incident, tag, and documentation proposals behind human approval. | DataHub Actions with explicit simulated/live state. |
+
+This is the key distinction from a normal database: a database stores rows; DataHub explains how data assets relate, who owns them, what they mean, and where they flow. The agent uses that context to constrain its reasoning instead of guessing from names.
 
 ## Architecture
 
@@ -229,6 +298,16 @@ CHANGE_PROOF_LIVE_DATAHUB=1 uv run pytest tests/integration/test_datahub_context
 - Static SQL discovery cannot guarantee complete dependency coverage.
 - Dynamic SQL and absent region metadata require manual review.
 - Regional flags are coordination signals, not legal-compliance determinations.
+
+## Why this fits the DataHub Agent Hackathon
+
+The project follows the challenge’s core idea: agents become useful when they can retrieve trusted context from the data stack. It demonstrates depth of DataHub usage, a practical enterprise incident, production-minded safeguards, and an open-source implementation rather than a generic chatbot wrapper. See the [official hackathon brief](https://datahub.com/blog/build-with-datahub-agent-hackathon/) for the challenge framing.
+
+## Creator
+
+**Made by Rishva Iyer** for the DataHub Agent Hackathon.
+
+The fictional AsterVale Living dataset is deliberately synthetic, but the workflow models a real enterprise problem: a cross-functional identifier migration that must be understood before it is changed.
 
 ## License
 
