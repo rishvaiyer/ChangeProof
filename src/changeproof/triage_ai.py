@@ -140,9 +140,19 @@ def _validate_grounding(review: AiTriageReview, result: TriageResult) -> None:
     text = "\n".join(
         [review.summary, review.explain_like_five, *review.query_risks, *review.missing_questions]
     )
-    unsupported = sorted(set(re.findall(r"`([^`]+)`", text)) - allowed)
+    identifiers = _backtick_identifiers(text)
+    unsupported = sorted(set(identifiers) - allowed)
     if unsupported:
         raise TriageAiUnavailable(
             f"OpenAI referenced an unsupported identifier: {unsupported[0]}. "
             "The deterministic triage result is unchanged."
         )
+
+
+def _backtick_identifiers(text: str) -> list[str]:
+    if text.count("`") % 2:
+        raise TriageAiUnavailable(
+            "OpenAI returned an unsupported identifier with an unclosed backtick. "
+            "The deterministic triage result is unchanged."
+        )
+    return re.findall(r"`([^`]+)`", text)

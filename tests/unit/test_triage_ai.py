@@ -47,6 +47,20 @@ class UngroundedOpenAI:
     responses = UngroundedResponses()
 
 
+class MalformedBacktickResponses:
+    def parse(self, **kwargs):
+        return SimpleNamespace(
+            output_parsed=AiTriageReview(
+                summary="Investigate `invented.asset and confirm the owner.",
+                explain_like_five="The evidence needs review.",
+            )
+        )
+
+
+class MalformedBacktickOpenAI:
+    responses = MalformedBacktickResponses()
+
+
 def _result():
     return build_triage_result(SAMPLE_INCIDENT_QUESTION, SAMPLE_SRS_TEXT)
 
@@ -74,4 +88,15 @@ def test_review_rejects_an_identifier_absent_from_mapped_assets_columns_or_domai
             _result(),
             settings=Settings(openai_api_key="configured", CHANGE_PROOF_MODEL="grounding-test"),
             client=UngroundedOpenAI(),
+        )
+
+
+def test_review_rejects_an_unclosed_unsupported_identifier():
+    with pytest.raises(TriageAiUnavailable, match="unsupported identifier"):
+        review_triage(
+            _result(),
+            settings=Settings(
+                openai_api_key="configured", CHANGE_PROOF_MODEL="malformed-backtick-test"
+            ),
+            client=MalformedBacktickOpenAI(),
         )

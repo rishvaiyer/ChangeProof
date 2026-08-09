@@ -25,6 +25,13 @@ Implemented Task 2 as a new optional AI review boundary for Task 1's `TriageResu
 - RED: `uv run pytest tests/unit/test_triage_ai.py -q` initially failed during collection with `ModuleNotFoundError: No module named 'changeproof.triage_ai'`.
 - GREEN: `uv run pytest tests/unit/test_triage_ai.py -q` passed: `3 passed`.
 
+## Fix round 1: malformed backtick grounding
+
+- Root cause: the grounding regex extracted only closed backtick pairs, so an unclosed unsupported identifier could produce no extracted token and bypass validation.
+- RED: after adding `test_review_rejects_an_unclosed_unsupported_identifier`, `uv run pytest tests/unit/test_triage_ai.py -q` failed with `1 failed, 3 passed` because no `TriageAiUnavailable` was raised.
+- GREEN: added balanced-delimiter validation before identifier extraction; `uv run pytest tests/unit/test_triage_ai.py -q` passed: `4 passed`.
+- Valid closed-backtick grounding remains covered by the existing structured-output and unsupported-identifier tests.
+
 ## Concerns
 
 - The review is optional and remains unavailable without a configured key; deterministic triage remains the fallback.
