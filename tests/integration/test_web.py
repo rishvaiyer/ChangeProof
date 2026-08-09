@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from changeproof.app import app, create_app, provider_from_env
 from changeproof.demo import analyze_demo_change
+from changeproof.enterprise import analyze_enterprise_change
 from changeproof.live import analyze_live_change
 
 client = TestClient(app)
@@ -119,7 +120,7 @@ def test_post_runs_sync_mcp_style_provider_outside_async_event_loop() -> None:
 def test_provider_from_env_defaults_to_bundled(monkeypatch) -> None:
     monkeypatch.delenv("CHANGE_PROOF_EVIDENCE_MODE", raising=False)
 
-    assert provider_from_env() is analyze_demo_change
+    assert provider_from_env() is analyze_enterprise_change
 
 
 def test_provider_from_env_selects_datahub(monkeypatch) -> None:

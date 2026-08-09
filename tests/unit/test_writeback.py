@@ -3,6 +3,7 @@ import pytest
 
 from changeproof.config import Settings
 from changeproof.demo import analyze_demo_change
+from changeproof.enterprise import analyze_enterprise_change
 from changeproof.models import ProposalAction
 from changeproof.writeback import (
     PENDING_CHANGE_TAG,
@@ -49,6 +50,24 @@ def test_incident_body_carries_the_observed_blast_radius(analysis):
         assert asset.name in incident.body
     assert "varchar" in incident.body and "bigint" in incident.body
     assert "not proof of every consumer" in incident.body
+
+
+def test_enterprise_incident_includes_sql_regions_and_evidence_limits() -> None:
+    enterprise = analyze_enterprise_change(
+        column="customer_id", old_type="varchar", new_type="bigint"
+    )
+    incident = next(
+        proposal
+        for proposal in build_proposals(enterprise)
+        if proposal.action is ProposalAction.RAISE_INCIDENT
+    )
+
+    assert "Hidden SQL consumers" in incident.body
+    assert "usp_reconcile_loyalty_customer" in incident.body
+    assert "Regional exposure" in incident.body
+    assert "WEST" in incident.body
+    assert "Evidence limits" in incident.body
+    assert "dynamic SQL" in incident.body
 
 
 def test_tag_proposal_targets_the_pending_change_tag(analysis):

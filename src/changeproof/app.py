@@ -9,7 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 
-from .demo import DemoAnalysis, DemoInputError, analyze_demo_change, catalog_options
+from .demo import DemoAnalysis, DemoInputError, catalog_options
+from .enterprise import analyze_enterprise_change
 from .live import analyze_live_change
 from .writeback import (
     WritebackUnavailableError,
@@ -19,7 +20,7 @@ from .writeback import (
 )
 
 PACKAGE_DIR = Path(__file__).parent
-DEFAULT_VALUES = {"column": "artist_id", "old_type": "varchar", "new_type": "bigint"}
+DEFAULT_VALUES = {"column": "customer_id", "old_type": "varchar", "new_type": "bigint"}
 
 templates = Jinja2Templates(directory=PACKAGE_DIR / "templates")
 AnalysisProvider = Callable[..., DemoAnalysis]
@@ -28,7 +29,7 @@ AnalysisProvider = Callable[..., DemoAnalysis]
 def provider_from_env() -> AnalysisProvider:
     mode = os.getenv("CHANGE_PROOF_EVIDENCE_MODE", "bundled").strip().lower()
     if mode in {"", "bundled"}:
-        return analyze_demo_change
+        return analyze_enterprise_change
     if mode == "datahub":
         return analyze_live_change
     raise RuntimeError(f"Unknown CHANGE_PROOF_EVIDENCE_MODE: {mode}")

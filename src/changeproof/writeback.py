@@ -44,6 +44,7 @@ def build_proposals(analysis: DemoAnalysis) -> list[ChangeProposal]:
     source_name = analysis.evidence.source_urn.split(",")[1].split(".")[-1]
 
     blast_radius = _format_blast_radius(analysis)
+    enterprise_evidence = _format_enterprise_evidence(analysis)
     proposals: list[ChangeProposal] = [
         ChangeProposal(
             proposal_id="incident-source",
@@ -57,6 +58,7 @@ def build_proposals(analysis: DemoAnalysis) -> list[ChangeProposal]:
                 f"Confidence: {analysis.impact.confidence.value}\n"
                 f"Strategy: {analysis.plan.strategy}\n\n"
                 f"Observed downstream impact:\n{blast_radius}\n\n"
+                f"{enterprise_evidence}"
                 f"{analysis.plan.summary}\n\n"
                 "Raised by ChangeProof on human approval. Lineage is evidence of "
                 "observed dependencies, not proof of every consumer."
@@ -121,6 +123,36 @@ def _format_blast_radius(analysis: DemoAnalysis) -> str:
         f"  {index}. {asset.name} (hop {asset.hop})"
         + (" [critical]" if asset.critical else "")
         for index, asset in enumerate(analysis.impact.impacted_assets, 1)
+    )
+
+
+def _format_enterprise_evidence(analysis: DemoAnalysis) -> str:
+    if not analysis.sql_dependencies and not analysis.region_exposures:
+        return ""
+
+    sql_lines = [
+        f"  - {item.schema_name}.{item.object_name} ({item.match_kind.value}, "
+        f"{item.confidence.value})"
+        + (
+            f" - {item.manual_review_reason}"
+            if item.manual_review_reason
+            else ""
+        )
+        for item in analysis.sql_dependencies
+    ]
+    region_lines = [
+        f"  - {item.region}: {item.risk.value}; "
+        f"{len(item.asset_names)} assets, {len(item.sql_objects)} SQL objects"
+        for item in analysis.region_exposures
+    ]
+    return (
+        "Hidden SQL consumers:\n"
+        + "\n".join(sql_lines)
+        + "\n\nRegional exposure:\n"
+        + "\n".join(region_lines)
+        + "\n\nEvidence limits:\n"
+        + "  DataHub lineage and static module scans can miss runtime dynamic SQL, "
+        "external tools, and assets with absent region metadata.\n\n"
     )
 
 
