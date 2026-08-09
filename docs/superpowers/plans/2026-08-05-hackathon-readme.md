@@ -40,7 +40,7 @@ Use this exact opening structure:
 
 ChangeProof uses DataHub metadata to trace the observed downstream impact of a proposed schema change, score the evidence, and generate a staged remediation and rollback plan.
 
-[Live demo](https://changeproof-production.up.railway.app/) · [Draft implementation PR](https://github.com/rishvaiyer/ChangeProof/pull/1)
+[Live demo](https://changeproof-production.up.railway.app/) · [Draft implementation PR](https://github.com/rishvaiyer/context-is-key/pull/1)
 
 > The public Railway demo uses bundled SonicLedger metadata for reliability. The repository also includes an opt-in local integration path verified against live DataHub MCP lineage.
 ```

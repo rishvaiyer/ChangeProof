@@ -104,7 +104,7 @@ contextIsKey exposes those limits. Unsupported SRS rules stay unmapped. Dynamic 
 ## Required final links
 
 - **Demo:** https://changeproof-production.up.railway.app/
-- **Repository:** https://github.com/rishvaiyer/ChangeProof
+- **Repository:** https://github.com/rishvaiyer/context-is-key
 - **Video:** add the verified public YouTube or Vimeo URL
 
 ## Claim boundaries

@@ -13,7 +13,7 @@ Create a judge-first Devpost draft for ChangeProof using only claims verified by
 
 ## Evidence and links
 
-- Repository: https://github.com/rishvaiyer/ChangeProof
+- Repository: https://github.com/rishvaiyer/context-is-key
 - Demo: https://changeproof-production.up.railway.app/
 - Demo scenario: change `stg_streams.artist_id` from `varchar` to `bigint`
 - Verified local path: DataHub schemas, ownership, tags, table lineage, and fine-grained lineage read through the official DataHub MCP server
@@ -33,4 +33,3 @@ Create a judge-first Devpost draft for ChangeProof using only claims verified by
 3. Complete additional hackathon fields using verified links and category choices.
 4. Leave video fields unfilled unless a valid public video URL exists.
 5. Stop at final submission for explicit user approval.
-
