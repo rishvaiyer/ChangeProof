@@ -139,9 +139,9 @@ connection would have been the easier story and the false one.
   approval, so the endpoint cannot be used to write arbitrary text into DataHub.
 - Column-level lineage end to end, from dbt models through DataHub to the
   decision, including fine-grained `artist_id` propagation.
-- 51 passing tests covering the classifier, planner, impact scorer, MCP
-  adapter, dbt demo, and the web app, plus an opt-in live DataHub integration
-  test.
+- 64 passing tests covering the classifier, planner, impact scorer, MCP
+  adapter, write-back proposals and approval gate, dbt demo, and the web app,
+  plus an opt-in live DataHub integration test.
 - One-command reproducibility. `make live-demo` builds the warehouse, starts
   and seeds DataHub, verifies lineage through the MCP server, and serves the
   dashboard.
