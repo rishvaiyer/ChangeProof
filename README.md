@@ -230,6 +230,24 @@ Every result can be downloaded as TXT or PDF. The Triage Composer also downloads
 - `rollback.sql`
 - `changeproof.sarif`
 
+## Schema-change gate for pull requests
+
+Run the deterministic gate against the included schema-change fixture:
+
+```bash
+uv run contextiskey gate examples/input/rename_artist_id.json --output-dir gate-output
+```
+
+The command writes a Markdown decision report and SARIF result. It exits `0`
+only when the change is supported automatically and the bundled graph has fresh,
+complete evidence. Incomplete evidence, unsupported changes, removals, and type
+changes remain review-gated and exit nonzero. The gate never executes SQL,
+contacts DataHub, or performs write-back. Its evidence is explicitly labeled as
+bundled, synthetic, and DataHub-shaped.
+
+The included GitHub Actions workflow publishes the gate report as a review
+artifact after pytest and Ruff pass.
+
 ## Run locally
 
 Requires Python 3.12.

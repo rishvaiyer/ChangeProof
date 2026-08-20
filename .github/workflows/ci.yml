@@ -1,0 +1,33 @@
+name: contextIsKey checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --extra dev
+      - run: uv run pytest -q
+      - run: uv run ruff check .
+      - name: Prove the fixture-backed schema gate
+        run: |
+          uv run contextiskey gate examples/input/rename_artist_id.json --output-dir gate-output
+          uv run python -m json.tool gate-output/contextiskey-gate.sarif >/dev/null
+          test -s gate-output/contextiskey-gate.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contextiskey-schema-gate
+          path: gate-output/

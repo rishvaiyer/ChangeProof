@@ -35,6 +35,9 @@ dev = [
   "ruff",
 ]
 
+[project.scripts]
+contextiskey = "changeproof.gate:app"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
