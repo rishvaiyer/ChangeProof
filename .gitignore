@@ -10,6 +10,8 @@ dist/
 .env
 .changeproof/
 .DS_Store
+.superpowers/
+docs/superpowers/
 demo/sonicledger/target/
 demo/sonicledger/logs/
 demo/sonicledger/.user.yml
